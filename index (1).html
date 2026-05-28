@@ -1,0 +1,1481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Colour Plane — Printer Portal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --ink:#001128;--ink2:#2B2C2D;--ink3:#888;
+  --canvas:#F4F4F4;--surface:#fff;--surface2:#EBEBEB;
+  --border:rgba(0,17,40,0.1);
+  --green:#3B6D11;--green-bg:#EAF3DE;
+  --r:8px;--r2:12px;
+  --fh:Garamond,Baskerville,Caslon,serif;
+  --fb:Lato,sans-serif;
+  --fm:'DM Mono',monospace;
+}
+body{font-family:var(--fb);background:var(--canvas);color:var(--ink);font-size:14px;min-height:100vh}
+.shell{display:flex;min-height:100vh}
+.sidebar{width:64px;background:var(--ink);display:flex;flex-direction:column;align-items:center;padding:18px 0;position:sticky;top:0;height:100vh;flex-shrink:0}
+.logo-area{width:100%;display:flex;justify-content:center;padding:0 10px 20px}
+.logo-area img,.logo-area svg{width:44px;height:auto;opacity:0.92}
+.nav-btn{width:44px;height:44px;display:flex;align-items:center;justify-content:center;border-radius:var(--r);cursor:pointer;color:rgba(255,255,255,0.35);transition:all 0.15s;border:none;background:none;margin-bottom:4px;position:relative}
+.nav-btn:hover{background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.75)}
+.nav-btn.active{background:rgba(255,255,255,0.14);color:#fff}
+.nav-btn i{font-size:18px}
+.nav-btn .tip{position:absolute;left:54px;background:var(--ink);color:#fff;font-size:11px;padding:4px 10px;border-radius:6px;white-space:nowrap;pointer-events:none;opacity:0;transition:opacity 0.12s;font-family:var(--fb);z-index:99;border:1px solid rgba(255,255,255,0.1)}
+.nav-btn:hover .tip{opacity:1}
+.dot{width:6px;height:6px;border-radius:50%;background:#3ACE94;margin-top:auto;margin-bottom:4px}
+.main{flex:1;min-width:0}
+.page{display:none;padding:28px 32px;min-height:100vh}
+.page.active{display:block}
+#page-home{display:none;padding:0 32px}
+#page-home.active{display:flex;align-items:center;min-height:100vh}
+.ph{margin-bottom:22px}
+.pt{font-family:var(--fh);font-size:22px;letter-spacing:-0.01em;margin-bottom:3px}
+.ps{color:var(--ink3);font-size:13px;font-weight:300}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);padding:18px 20px}
+.clbl{font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink3);font-family:var(--fm);margin-bottom:10px}
+/* HOME */
+.home-wrap{max-width:500px}
+.home-title{font-family:var(--fh);font-size:36px;letter-spacing:-0.02em;line-height:1.15;margin-bottom:10px}
+.home-sub{font-size:15px;color:var(--ink3);font-weight:300;line-height:1.6;margin-bottom:32px}
+.home-actions{display:flex;flex-direction:column;gap:10px;margin-bottom:32px}
+.home-btn{display:flex;align-items:center;gap:14px;padding:16px 20px;border-radius:var(--r2);cursor:pointer;border:none;font-family:var(--fb);text-align:left;width:100%;transition:all 0.15s}
+.home-btn.primary{background:var(--ink);color:#fff}
+.home-btn.primary:hover{background:#001f4a;transform:translateY(-1px)}
+.home-btn.secondary{background:var(--surface);border:1px solid var(--border);color:var(--ink)}
+.home-btn.secondary:hover{border-color:var(--ink);transform:translateY(-1px)}
+.hbi{width:40px;height:40px;border-radius:var(--r);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:18px}
+.home-btn.primary .hbi{background:rgba(255,255,255,0.12);color:#fff}
+.home-btn.secondary .hbi{background:var(--surface2);color:var(--ink2)}
+.hbt{flex:1}
+.hbl{font-size:14px;font-weight:600;margin-bottom:2px}
+.home-btn.primary .hbl{color:#fff}
+.hbd{font-size:12px;font-weight:300}
+.home-btn.primary .hbd{color:rgba(255,255,255,0.55)}
+.home-btn.secondary .hbd{color:var(--ink3)}
+.hba{font-size:16px;color:rgba(255,255,255,0.4)}
+.home-btn.secondary .hba{color:var(--ink3)}
+.home-footer{font-size:12px;color:var(--ink3);display:flex;align-items:center;gap:6px}
+.home-footer i{font-size:14px;color:#3ACE94}
+/* FORMS */
+.fg2{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-bottom:12px}
+.fg{display:flex;flex-direction:column;gap:5px}
+.fg.full{grid-column:1/-1}
+label{font-size:11px;color:var(--ink2);font-weight:500}
+select,input[type=number]{width:100%;padding:8px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);font-size:13px;color:var(--ink);font-family:var(--fb);outline:none;transition:border-color 0.15s;-webkit-appearance:none;appearance:none}
+select:focus,input[type=number]:focus{border-color:var(--ink);background:#fff}
+input::placeholder{color:var(--ink3)}
+.ip{position:relative}
+.pfx{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--ink3);font-size:12px;pointer-events:none}
+.ip input{padding-left:20px}
+.sfx{position:absolute;right:10px;top:50%;transform:translateY(-50%);color:var(--ink3);font-size:12px;pointer-events:none}
+.has-sfx input{padding-right:26px}
+/* QTY BTNS */
+.qbr{display:flex;gap:6px;flex-wrap:wrap}
+.qb{padding:6px 10px;border:1px solid var(--border);border-radius:var(--r);background:var(--surface2);cursor:pointer;font-size:12px;color:var(--ink2);font-family:var(--fm);transition:all 0.15s;border:none}
+.qb:hover{background:var(--ink);color:#fff}
+.qb.active{background:var(--ink);border-color:var(--ink);color:#fff}
+/* RESULTS PANEL */
+.res{background:var(--ink);border-radius:var(--r2);padding:20px;color:#fff}
+.rrow{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.07)}
+.rrow:last-child{border-bottom:none}
+.rl{font-size:12px;color:rgba(255,255,255,0.45)}
+.rv{font-family:var(--fm);font-size:13px}
+.bign{font-family:var(--fh);font-size:28px;font-weight:400;color:#3ACE94;letter-spacing:-0.02em}
+.s2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.sb{background:rgba(255,255,255,0.06);border-radius:var(--r);padding:10px;text-align:center}
+.sbl{font-size:10px;color:rgba(255,255,255,0.3);letter-spacing:0.08em;text-transform:uppercase;font-family:var(--fm);margin-bottom:3px}
+.sbv{font-family:var(--fh);font-size:18px}
+/* TIER TABLE */
+.ttbl{width:100%;border-collapse:collapse;font-size:12px;font-family:var(--fm)}
+.ttbl th{font-size:10px;letter-spacing:0.07em;text-transform:uppercase;color:var(--ink3);padding:4px 7px;text-align:left;border-bottom:1px solid var(--border)}
+.ttbl td{padding:5px 7px;border-bottom:1px solid rgba(0,0,0,0.04)}
+.ttbl tr:last-child td{border-bottom:none}
+.ttbl tr.hl td{background:var(--ink);color:#fff}
+.ttbl tr.hl td:first-child{border-radius:var(--r) 0 0 var(--r)}
+.ttbl tr.hl td:last-child{border-radius:0 var(--r) var(--r) 0}
+.tc{color:var(--green)}
+.ttbl tr.hl .tc{color:#3ACE94}
+/* PROFIT BAR */
+.pbar{display:flex;height:44px;border-radius:var(--r2);overflow:hidden;border:1px solid var(--border);margin:10px 0}
+.pbs{display:flex;flex-direction:column;justify-content:center;padding:0 9px;transition:flex 0.35s ease;overflow:hidden;min-width:0}
+.pbl{font-size:9px;text-transform:uppercase;letter-spacing:0.07em;opacity:0.55;font-family:var(--fm);white-space:nowrap}
+.pbv{font-family:var(--fh);font-size:13px;white-space:nowrap}
+.pb-blank{background:var(--surface2);color:var(--ink)}
+.pb-other{background:var(--surface);border-left:1px solid var(--border);color:var(--ink)}
+.pb-profit{background:var(--ink);color:#fff}
+/* MARGIN TABS */
+.mtabs{display:flex;gap:2px;background:var(--surface2);padding:3px;border-radius:var(--r);margin-bottom:10px;border:1px solid var(--border);width:fit-content}
+.mtab{padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;color:var(--ink3);border:none;background:none;font-family:var(--fb);transition:all 0.15s;font-weight:500}
+.mtab.active{background:var(--ink);color:#fff}
+.band-info{font-size:11px;color:var(--ink3);margin-top:5px;font-family:var(--fm)}
+/* PILLS */
+.mp{display:inline-block;padding:2px 8px;border-radius:99px;font-size:11px;font-family:var(--fm)}
+.mp-hi{background:rgba(59,109,17,0.12);color:var(--green)}
+.mp-mid{background:#FAEEDA;color:#854F0B}
+.mp-lo{background:#FCEBEB;color:#A32D2D}
+/* SUGGEST PRICE GRID */
+.rg{display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px;margin-top:8px}
+.ri{border-radius:var(--r);padding:8px;text-align:center}
+.ri.a{background:rgba(255,255,255,0.06)}
+.ri.b{background:rgba(255,255,255,0.1)}
+.ri.c{background:rgba(58,206,148,0.12);border:1px solid rgba(58,206,148,0.2)}
+.ril{font-size:9px;color:rgba(255,255,255,0.35);letter-spacing:0.07em;text-transform:uppercase;font-family:var(--fm);margin-bottom:2px}
+.rip{font-family:var(--fh);font-size:15px;color:#fff}
+.ri.c .rip{color:#3ACE94}
+.rim{font-size:10px;color:rgba(255,255,255,0.35);font-family:var(--fm);margin-top:2px}
+/* ACTIONS */
+.ar{display:flex;gap:7px;margin-top:10px}
+.act{flex:1;display:flex;align-items:center;justify-content:center;gap:5px;padding:8px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.1);border-radius:var(--r);color:rgba(255,255,255,0.65);font-size:12px;cursor:pointer;font-family:var(--fb);transition:all 0.15s}
+.act:hover{background:rgba(255,255,255,0.14);color:#fff}
+.vs{display:flex;justify-content:space-between;align-items:center;background:rgba(255,255,255,0.05);border-radius:var(--r);padding:9px 12px;margin-top:9px}
+.vsl{font-size:11px;color:rgba(255,255,255,0.35)}
+.vsv{font-family:var(--fh);font-size:14px;color:#3ACE94}
+.quote-actions{display:flex;gap:8px;margin-top:10px}
+.qa-btn{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:9px;border-radius:var(--r);font-size:12px;cursor:pointer;font-family:var(--fb);font-weight:500;transition:all 0.15s;border:none}
+.qa-btn.email{background:var(--green-bg);color:var(--green);border:1px solid rgba(59,109,17,0.2)}
+.qa-btn.email:hover{background:#d4eac0}
+.qa-btn.pdf{background:var(--ink);color:#fff}
+.qa-btn.pdf:hover{background:#001f4a}
+/* PITCH */
+.pitchbox{background:rgba(58,206,148,0.08);border:1px solid rgba(58,206,148,0.2);border-radius:var(--r);padding:13px;margin-top:10px}
+.pitchlbl{font-size:10px;color:#3ACE94;letter-spacing:0.1em;text-transform:uppercase;font-family:var(--fm);margin-bottom:4px}
+.pitchtxt{font-size:13px;color:#fff;line-height:1.65;font-style:italic}
+/* TWO COL */
+.tc2{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start}
+/* PRICING TABLE */
+.ptw{background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);overflow:hidden}
+.pth{display:grid;grid-template-columns:2fr 1fr 1fr 80px;background:var(--ink);padding:9px 14px}
+.pth span{font-size:10px;color:rgba(255,255,255,0.45);letter-spacing:0.07em;text-transform:uppercase;font-family:var(--fm)}
+.pth span:first-child{color:rgba(255,255,255,0.7)}
+.ptr{display:grid;grid-template-columns:2fr 1fr 1fr 80px;padding:9px 14px;border-bottom:1px solid rgba(0,0,0,0.05);align-items:center;cursor:pointer;transition:background 0.1s}
+.ptr:last-child{border-bottom:none}
+.ptr:hover{background:var(--surface2)}
+.ptrn{font-size:13px;font-weight:500;color:var(--ink)}
+.ptrc{font-size:11px;color:var(--ink3);font-family:var(--fm)}
+.ptrt{font-family:var(--fm);font-size:13px;color:var(--green);font-weight:500}
+.ptrw{font-family:var(--fm);font-size:13px;color:var(--ink3)}
+.ulnk{font-size:11px;color:var(--ink3);font-family:var(--fb);background:none;border:none;cursor:pointer;padding:0}
+.ulnk:hover{color:var(--ink)}
+/* INCOMPLETE */
+.inc{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px;text-align:center;gap:7px}
+.inc i{font-size:26px;color:var(--ink3)}
+.inc p{font-size:12px;color:var(--ink3);max-width:200px;line-height:1.5}
+/* PRODUCTS */
+.prod-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);overflow:hidden;margin-bottom:8px;cursor:pointer;transition:border-color 0.15s}
+.prod-card:hover{border-color:var(--ink3)}
+.prod-card.expanded{border-color:var(--ink)}
+.prod-head{display:flex;justify-content:space-between;align-items:flex-start;padding:13px 15px}
+.prod-body{display:none;border-top:1px solid var(--border);padding:13px 15px}
+.prod-card.expanded .prod-body{display:block}
+.spill{display:inline-block;font-size:10px;padding:3px 8px;border-radius:99px;background:var(--surface2);color:var(--ink2);font-family:var(--fm);margin-right:4px;margin-bottom:4px}
+.pbadge{display:inline-block;font-size:9px;padding:2px 6px;border-radius:99px;font-family:var(--fm);margin-top:3px}
+.badge-hot{background:#FAEEDA;color:#854F0B}
+.pswatch{width:16px;height:16px;border-radius:50%;border:1.5px solid rgba(0,0,0,0.1);display:inline-block;margin-right:3px;margin-bottom:3px}
+/* GATE */
+#cp-gate{position:fixed;inset:0;background:var(--canvas);z-index:9999;display:flex;align-items:center;justify-content:center}
+#cp-gate-box{background:#fff;border:1px solid rgba(0,17,40,0.12);border-radius:14px;padding:36px 40px;width:100%;max-width:400px;box-shadow:0 4px 24px rgba(0,17,40,0.08)}
+#cp-gate-title{font-family:var(--fh);font-size:20px;color:var(--ink);margin-bottom:4px}
+#cp-gate-sub{font-size:13px;color:#888;margin-bottom:24px;line-height:1.5;font-weight:300}
+.cpg-field{margin-bottom:14px}
+.cpg-field label{display:block;font-size:11px;font-weight:600;color:var(--ink2);letter-spacing:0.03em;text-transform:uppercase;margin-bottom:5px}
+.cpg-field input{width:100%;padding:10px 13px;border:1px solid rgba(0,17,40,0.15);border-radius:8px;font-size:14px;font-family:var(--fb);color:var(--ink);background:var(--canvas);outline:none;box-sizing:border-box;transition:border-color 0.15s}
+.cpg-field input:focus{border-color:var(--ink);background:#fff}
+#cp-gate-btn{width:100%;padding:12px;background:var(--ink);color:#fff;border:none;border-radius:8px;font-size:14px;font-family:var(--fb);font-weight:600;cursor:pointer;margin-top:8px;transition:background 0.15s}
+#cp-gate-btn:hover{background:#001f4a}
+#cp-gate-err{font-size:12px;color:#c0392b;margin-top:8px;display:none}
+#cp-gate-privacy{font-size:11px;color:#bbb;text-align:center;margin-top:14px;line-height:1.5}
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,17,40,0.6);z-index:9998;display:none;align-items:center;justify-content:center;padding:20px}
+.modal-overlay.open{display:flex}
+.modal-box{background:#fff;border-radius:14px;padding:32px 36px;width:100%;max-width:420px;box-shadow:0 8px 48px rgba(0,17,40,0.2)}
+.modal-title{font-family:var(--fh);font-size:20px;color:var(--ink);margin-bottom:6px}
+.modal-sub{font-size:13px;color:#888;margin-bottom:4px;line-height:1.5}
+.modal-hint{font-size:12px;color:#aaa;margin-bottom:18px;font-style:italic;line-height:1.5}
+.modal-field{display:flex;flex-direction:column;gap:5px;margin-bottom:16px}
+.modal-field label{font-size:11px;font-weight:600;color:var(--ink2);letter-spacing:0.03em;text-transform:uppercase}
+.modal-field input{padding:10px 13px;border:1px solid rgba(0,17,40,0.15);border-radius:8px;font-size:14px;font-family:var(--fb);color:var(--ink);background:var(--canvas);outline:none;width:100%;box-sizing:border-box;transition:border-color 0.15s}
+.modal-field input:focus{border-color:var(--ink);background:#fff}
+.modal-summary{background:var(--canvas);border-radius:8px;padding:12px 14px;margin-bottom:18px;font-size:12px;color:#888;line-height:1.9;font-family:var(--fm)}
+.modal-summary span{color:var(--ink);font-weight:500}
+.modal-btns{display:flex;gap:10px}
+.modal-btn-save{flex:1;padding:11px;background:var(--ink);color:#fff;border:none;border-radius:8px;font-size:13px;font-family:var(--fb);font-weight:600;cursor:pointer;transition:background 0.15s}
+.modal-btn-save:hover{background:#001f4a}
+.modal-btn-cancel{padding:11px 16px;background:transparent;color:#888;border:1px solid #ddd;border-radius:8px;font-size:13px;font-family:var(--fb);cursor:pointer;transition:all 0.15s}
+.modal-btn-cancel:hover{border-color:var(--ink);color:var(--ink)}
+.modal-success{text-align:center;padding:20px 0}
+.modal-success i{font-size:40px;color:var(--green);margin-bottom:12px;display:block}
+.modal-success-title{font-family:var(--fh);font-size:18px;color:var(--ink);margin-bottom:6px}
+.modal-success-sub{font-size:13px;color:#888;line-height:1.5}
+/* EMAIL MODAL */
+.email-modal-overlay{position:fixed;inset:0;background:rgba(0,17,40,0.5);z-index:9997;display:none;align-items:center;justify-content:center;padding:20px}
+.email-modal-overlay.open{display:flex}
+.email-modal-box{background:#fff;border-radius:14px;padding:32px 36px;width:100%;max-width:520px;box-shadow:0 8px 48px rgba(0,17,40,0.15)}
+.email-modal-title{font-family:var(--fh);font-size:20px;color:var(--ink);margin-bottom:6px}
+.email-modal-sub{font-size:13px;color:#888;margin-bottom:20px;line-height:1.5}
+.email-preview{background:var(--canvas);border-radius:8px;padding:16px 18px;font-size:13px;color:var(--ink2);line-height:1.9;font-family:var(--fb);white-space:pre-wrap;border:1px solid rgba(0,17,40,0.08);margin-bottom:16px;max-height:320px;overflow-y:auto}
+.email-btns{display:flex;gap:10px}
+.email-copy-btn{flex:1;padding:11px;background:var(--ink);color:#fff;border:none;border-radius:8px;font-size:13px;font-family:var(--fb);font-weight:600;cursor:pointer;transition:background 0.15s;display:flex;align-items:center;justify-content:center;gap:7px}
+.email-copy-btn:hover{background:#001f4a}
+.email-copy-btn.copied{background:var(--green)}
+.email-close-btn{padding:11px 16px;background:transparent;color:#888;border:1px solid #ddd;border-radius:8px;font-size:13px;font-family:var(--fb);cursor:pointer;transition:all 0.15s}
+.email-close-btn:hover{border-color:var(--ink);color:var(--ink)}
+/* SAVED QUOTES */
+.sq-empty{text-align:center;padding:60px 20px;color:var(--ink3)}
+.sq-empty i{font-size:36px;margin-bottom:12px;display:block;opacity:0.3}
+.sq-empty p{font-size:13px;line-height:1.6}
+.sq-grid{display:flex;flex-direction:column;gap:10px}
+.sq-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);padding:16px 20px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:start}
+.sq-client{font-family:var(--fh);font-size:16px;color:var(--ink);margin-bottom:4px;word-break:break-word}
+.sq-meta{font-size:12px;color:var(--ink3);font-family:var(--fm);line-height:1.8}
+.sq-card-right{text-align:right;flex-shrink:0}
+.sq-profit{font-family:var(--fh);font-size:20px;color:var(--green)}
+.sq-margin{font-size:11px;color:var(--ink3);font-family:var(--fm);margin-top:2px}
+.sq-date{font-size:11px;color:var(--ink3);font-family:var(--fm);margin-top:6px}
+.sq-actions{display:flex;gap:6px;margin-top:10px}
+.sq-act{padding:5px 12px;border-radius:var(--r);font-size:11px;cursor:pointer;font-family:var(--fb);transition:all 0.15s;border:1px solid var(--border);background:var(--surface2);color:var(--ink2)}
+.sq-act:hover{border-color:var(--ink);color:var(--ink)}
+.sq-act.danger{color:#A32D2D;border-color:rgba(163,45,45,0.2)}
+.sq-act.danger:hover{background:#FCEBEB;border-color:#A32D2D}
+.sq-note{font-size:12px;color:var(--ink3);background:var(--surface2);border-radius:var(--r);padding:10px 14px;margin-bottom:16px;line-height:1.6}
+
+/* MULTI-PRODUCT QUOTE */
+.qlines{margin-top:10px;border-top:1px solid rgba(255,255,255,0.07);padding-top:10px}
+.qline{display:flex;justify-content:space-between;align-items:center;padding:7px 10px;background:rgba(255,255,255,0.06);border-radius:var(--r);margin-bottom:6px;font-size:12px}
+.qline-name{color:rgba(255,255,255,0.7);flex:1}
+.qline-detail{color:rgba(255,255,255,0.4);font-family:var(--fm);font-size:11px;margin:0 10px}
+.qline-profit{color:#3ACE94;font-family:var(--fm);font-size:12px;font-weight:500;margin-right:8px}
+.qline-del{background:none;border:none;color:rgba(255,255,255,0.25);cursor:pointer;font-size:14px;padding:0;line-height:1;transition:color 0.15s}
+.qline-del:hover{color:rgba(255,255,255,0.6)}
+.qline-total{display:flex;justify-content:space-between;align-items:center;padding:8px 10px;background:rgba(58,206,148,0.1);border-radius:var(--r);border:1px solid rgba(58,206,148,0.2);margin-top:4px}
+.qline-total-l{font-size:12px;color:rgba(255,255,255,0.5)}
+.qline-total-v{font-family:var(--fh);font-size:18px;color:#3ACE94}
+.add-product-btn{width:100%;padding:9px;background:rgba(255,255,255,0.06);border:1px dashed rgba(255,255,255,0.2);border-radius:var(--r);color:rgba(255,255,255,0.5);font-size:12px;cursor:pointer;font-family:var(--fb);transition:all 0.15s;display:flex;align-items:center;justify-content:center;gap:6px;margin-top:8px}
+.add-product-btn:hover{background:rgba(255,255,255,0.1);border-color:rgba(255,255,255,0.35);color:rgba(255,255,255,0.8)}
+
+
+/* MULTI-PRODUCT QUOTE */
+.qlines{margin-top:10px;border-top:1px solid rgba(255,255,255,0.07);padding-top:10px}
+.qline{display:flex;justify-content:space-between;align-items:center;padding:7px 10px;background:rgba(255,255,255,0.06);border-radius:var(--r);margin-bottom:6px;font-size:12px}
+.qline-name{color:rgba(255,255,255,0.7);flex:1}
+.qline-detail{color:rgba(255,255,255,0.4);font-family:var(--fm);font-size:11px;margin:0 10px}
+.qline-profit{color:#3ACE94;font-family:var(--fm);font-size:12px;font-weight:500;margin-right:8px}
+.qline-del{background:none;border:none;color:rgba(255,255,255,0.25);cursor:pointer;font-size:14px;padding:0;line-height:1;transition:color 0.15s}
+.qline-del:hover{color:rgba(255,255,255,0.6)}
+.qline-total{display:flex;justify-content:space-between;align-items:center;padding:8px 10px;background:rgba(58,206,148,0.1);border-radius:var(--r);border:1px solid rgba(58,206,148,0.2);margin-top:4px}
+.qline-total-l{font-size:12px;color:rgba(255,255,255,0.5)}
+.qline-total-v{font-family:var(--fh);font-size:18px;color:#3ACE94}
+.add-product-btn{width:100%;padding:9px;background:rgba(255,255,255,0.06);border:1px dashed rgba(255,255,255,0.2);border-radius:var(--r);color:rgba(255,255,255,0.5);font-size:12px;cursor:pointer;font-family:var(--fb);transition:all 0.15s;display:flex;align-items:center;justify-content:center;gap:6px;margin-top:8px}
+.add-product-btn:hover{background:rgba(255,255,255,0.1);border-color:rgba(255,255,255,0.35);color:rgba(255,255,255,0.8)}
+</style>
+</head>
+<body>
+
+<div id="cp-gate">
+  <div id="cp-gate-box">
+    <div id="cp-gate-title">Printer Portal</div>
+    <div id="cp-gate-sub">Enter your details to access trade pricing, profit tools, and product resources.</div>
+    <div class="cpg-field"><label>Your name</label><input type="text" id="cpg-name" placeholder="e.g. Sarah Smith"></div>
+    <div class="cpg-field"><label>Company / print shop</label><input type="text" id="cpg-company" placeholder="e.g. Ace Print Co"></div>
+    <div class="cpg-field"><label>Email address</label><input type="email" id="cpg-email" placeholder="e.g. sarah@aceprint.com.au"></div>
+    <button id="cp-gate-btn">Access the portal</button>
+    <div id="cp-gate-err"></div>
+    <div id="cp-gate-privacy">Your details are only seen by the Colour Plane team.</div>
+  </div>
+</div>
+
+<div class="shell">
+<div class="sidebar">
+  <div class="logo-area"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 50" fill="white"><text x="2" y="20" font-family="Garamond,serif" font-size="11" letter-spacing="1">BLANKS BY</text><text x="2" y="38" font-family="Garamond,serif" font-size="13" letter-spacing="1">COLOUR PLANE</text></svg></div>
+  <button class="nav-btn active" id="nav-home" onclick="showPage('home')"><i class="ti ti-home"></i><span class="tip">Home</span></button>
+  <button class="nav-btn" id="nav-profit" onclick="showPage('profit')"><i class="ti ti-calculator"></i><span class="tip">Profit Calculator</span></button>
+  <button class="nav-btn" id="nav-pricing" onclick="showPage('pricing')"><i class="ti ti-table"></i><span class="tip">All Pricing</span></button>
+  <button class="nav-btn" id="nav-products" onclick="showPage('products')"><i class="ti ti-shirt"></i><span class="tip">Products</span></button>
+  <button class="nav-btn" id="nav-resources" onclick="showPage('resources')"><i class="ti ti-package"></i><span class="tip">Resources</span></button>
+  <button class="nav-btn" id="nav-saved" onclick="showPage('saved')"><i class="ti ti-bookmark"></i><span class="tip">Saved Quotes</span></button>
+  <div class="dot"></div>
+</div>
+<div class="main">
+
+<!-- HOME -->
+<div class="page active" id="page-home">
+<div class="home-wrap">
+  <div class="home-title">Blanks by Colour Plane<br>Printer Portal</div>
+  <div class="home-sub" id="home-sub">Your trade pricing, profit tools, and product resources.</div>
+  <div class="home-actions">
+    <button class="home-btn primary" onclick="showPage('profit')">
+      <div class="hbi"><i class="ti ti-calculator"></i></div>
+      <div class="hbt"><div class="hbl">Build a quote</div><div class="hbd">Profit calculator with live trade pricing</div></div>
+      <i class="ti ti-arrow-right hba"></i>
+    </button>
+    <button class="home-btn secondary" onclick="showPage('pricing')">
+      <div class="hbi"><i class="ti ti-table"></i></div>
+      <div class="hbt"><div class="hbl">Check pricing</div><div class="hbd">Trade cost vs customer direct — all products</div></div>
+      <i class="ti ti-arrow-right hba"></i>
+    </button>
+
+    <button class="home-btn secondary" onclick="showPage('resources')">
+      <div class="hbi"><i class="ti ti-package"></i></div>
+      <div class="hbt"><div class="hbl">Resources</div><div class="hbd">Digital assets and trade pricing download</div></div>
+      <i class="ti ti-arrow-right hba"></i>
+    </button>
+  </div>
+</div>
+</div>
+
+<!-- PROFIT CALCULATOR -->
+<div class="page" id="page-profit">
+<div class="ph"><div class="pt">Profit Calculator</div><div class="ps">Colour Plane trade pricing is pre-loaded. Add your own numbers.</div></div>
+<div style="max-width:600px">
+  <div>
+    <div class="card" style="margin-bottom:11px">
+      <div class="clbl">Garment &amp; quantity</div>
+      <div class="fg2">
+        <div class="fg"><label>Garment</label>
+          <select id="calc-garment" onchange="onGarmentChange()">
+            <optgroup label="T-Shirts">
+              <option value="baby-tee">Baby T-shirt / Ringer Tee</option>
+              <option value="hw-tee">Heavyweight T-shirt</option>
+              <option value="everyday-tee">Everyday T-shirt</option>
+              <option value="ls-tee">Long Sleeve T-shirt</option>
+            </optgroup>
+            <optgroup label="Hoodies + Crewnecks">
+              <option value="acid-zip">Acid Washed Zip-Up</option>
+              <option value="acid-crew">Acid Washed Crewneck</option>
+              <option value="hw-hoodie" selected>Heavyweight Hoodie</option>
+              <option value="hw-crew">Heavyweight Crewneck</option>
+            </optgroup>
+            <optgroup label="Accessories">
+              <option value="dad-cap">Caps</option>
+              <option value="tote">Heavyweight Tote Bag</option>
+            </optgroup>
+          </select>
+        </div>
+        <div class="fg"><label>Print method</label>
+          <select id="calc-method"><option>DTF</option><option>Screen Print</option><option>Embroidery</option><option>Sublimation</option><option>Digital (DTG)</option></select>
+        </div>
+        <div class="fg full"><label>Quantity</label>
+          <div class="qbr" id="calc-qty-row">
+            <button class="qb" onclick="setCalcQty(10,this)">10</button>
+            <button class="qb" onclick="setCalcQty(20,this)">20</button>
+            <button class="qb active" onclick="setCalcQty(50,this)">50</button>
+            <button class="qb" onclick="setCalcQty(100,this)">100</button>
+            <button class="qb" onclick="setCalcQty(200,this)">200</button>
+            <button class="qb" onclick="setCalcQty(500,this)">500</button>
+          </div>
+        </div>
+      </div>
+      <div style="background:var(--green-bg);border-radius:var(--r);padding:9px 12px;margin-bottom:10px;border:1px solid rgba(59,109,17,0.12)">
+        <div style="font-size:10px;color:var(--green);letter-spacing:0.08em;text-transform:uppercase;font-family:var(--fm);margin-bottom:3px">Colour Plane trade price</div>
+        <div style="display:flex;align-items:baseline;gap:8px">
+          <div style="font-family:var(--fh);font-size:22px;color:var(--green)" id="cp-price-display">$34.25</div>
+          <div style="font-size:12px;color:var(--green);opacity:0.7" id="cp-tier-display">per unit at 50-199</div>
+        </div>
+      </div>
+      <div style="background:var(--surface2);border-radius:var(--r);padding:9px 11px">
+        <div style="font-size:10px;color:var(--ink3);letter-spacing:0.08em;text-transform:uppercase;font-family:var(--fm);margin-bottom:6px">All trade tiers</div>
+        <table class="ttbl" id="tier-tbl"></table>
+      </div>
+    </div>
+    <div class="card">
+      <div class="clbl">Your print &amp; margin details</div>
+      <div style="background:var(--surface2);border-radius:var(--r);padding:12px;margin-bottom:12px">
+        <div style="font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink3);font-family:var(--fm);margin-bottom:8px">Your markup on the blank</div>
+        <div class="mtabs">
+          <button class="mtab active" id="mtab-pct" onclick="setMarginMode('pct')">By % margin</button>
+          <button class="mtab" id="mtab-dollar" onclick="setMarginMode('dollar')">By $ per unit</button>
+          <button class="mtab" id="mtab-sell" onclick="setMarginMode('sell')">Set sell price</button>
+        </div>
+        <div id="margin-pct-input">
+          <label>Target margin %</label>
+          <div class="ip has-sfx" style="margin-top:5px"><input type="number" id="margin-pct" placeholder="e.g. 40" step="1" min="0" max="99" oninput="updateCalc()"><span class="sfx">%</span></div>
+          <div class="band-info">Enter your target margin and we'll calculate the sell price</div>
+        </div>
+        <div id="margin-dollar-input" style="display:none">
+          <label>Profit $ per unit (on top of all costs)</label>
+          <div class="ip" style="margin-top:5px"><span class="pfx">$</span><input type="number" id="margin-dollar" placeholder="e.g. 25.00" step="1" min="0" oninput="updateCalc()"></div>
+          <div class="band-info">We'll calculate your margin % and sell price</div>
+        </div>
+        <div id="margin-sell-input" style="display:none">
+          <label>Your sell price to client (per unit)</label>
+          <div class="ip" style="margin-top:5px"><span class="pfx">$</span><input type="number" id="sell-price" placeholder="e.g. 75.00" step="1" min="0" oninput="updateCalc()"></div>
+          <div class="band-info">We'll calculate your margin and total profit</div>
+        </div>
+      </div>
+      <div style="background:var(--surface2);border-radius:var(--r);padding:12px;margin-bottom:12px">
+        <div style="font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink3);font-family:var(--fm);margin-bottom:8px">Your print &amp; decoration costs <span style="font-size:10px;color:var(--ink3);font-style:italic;text-transform:none;letter-spacing:0">(no markup applied)</span></div>
+        <div class="fg2" style="margin-bottom:0">
+          <div class="fg"><label>Print cost per unit</label><div class="ip"><span class="pfx">$</span><input type="number" id="print-cost" placeholder="Your rate" step="0.5" min="0" oninput="updateCalc()"></div></div>
+          <div class="fg"><label>Setup / screens (amortised)</label><div class="ip"><span class="pfx">$</span><input type="number" id="setup-cost" placeholder="e.g. 2.00" step="0.5" min="0" oninput="updateCalc()"></div></div>
+          <div class="fg"><label>Freight / handling per unit</label><div class="ip"><span class="pfx">$</span><input type="number" id="freight-cost" placeholder="e.g. 1.50" step="0.25" min="0" oninput="updateCalc()"></div></div>
+        </div>
+      </div>
+      <div id="incomplete-msg" class="inc"><i class="ti ti-pencil"></i><p>Enter your print cost and margin above to see your numbers</p></div>
+      <div id="profit-bar-wrap" style="display:none">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px">
+          <div style="font-size:11px;color:var(--ink3)">Cost vs profit</div>
+          <div id="margin-pill" class="mp mp-hi"></div>
+        </div>
+        <div class="pbar">
+          <div class="pbs pb-blank" id="pb-blank" style="flex:34"><div class="pbl">Blank</div><div class="pbv" id="pb-blank-v">$34.25</div></div>
+          <div class="pbs pb-other" id="pb-other" style="flex:1"><div class="pbl">Your costs</div><div class="pbv" id="pb-other-v">$0</div></div>
+          <div class="pbs pb-profit" id="pb-profit" style="flex:1"><div class="pbl">Profit</div><div class="pbv" id="pb-pv">-</div></div>
+        </div>
+      </div>
+      <button onclick="addProductToQuote()" id="add-to-quote-btn" style="width:100%;margin-top:12px;padding:12px;background:#3B6D11;color:#fff;border:none;border-radius:var(--r);font-size:14px;font-family:Lato,sans-serif;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:background 0.15s">
+        <i class="ti ti-plus" style="font-size:16px"></i> Add to quote
+      </button>
+    </div>
+  </div>
+  <div>
+    <div style="display:none">
+  <span id="results-inc"></span>
+  <span id="results-filled">x</span>
+</div>
+<div style="display:none">
+  <span id="r-blank"></span><span id="r-print"></span><span id="r-setup"></span>
+  <span id="r-freight"></span><span id="r-total"></span><span id="r-sell"></span>
+  <span id="r-ppu"></span><span id="r-total-profit"></span><span id="r-margin"></span>
+  <span id="r-qty-lbl"></span>
+</div>
+
+<!-- QUOTE SUMMARY (full width below calculator) -->
+<div id="quote-summary-wrap" style="display:none;margin-top:16px">
+  <div style="background:var(--ink);border-radius:var(--r2);padding:20px 24px;color:#fff">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <div style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:rgba(255,255,255,0.4);font-family:var(--fm)">Quote — line items</div>
+      <button onclick="clearQuote()" style="font-size:11px;color:rgba(255,255,255,0.3);background:none;border:none;cursor:pointer;font-family:var(--fb);transition:color 0.15s" onmouseover="this.style.color='rgba(255,255,255,0.7)'" onmouseout="this.style.color='rgba(255,255,255,0.3)'">Clear all</button>
+    </div>
+    <div id="quote-lines"></div>
+    <div id="quote-grand-total" style="display:flex;justify-content:space-between;align-items:center;margin-top:12px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.1)">
+      <div style="font-size:13px;color:rgba(255,255,255,0.5)">Total profit across all products</div>
+      <div style="font-family:var(--fh);font-size:22px;color:#3ACE94" id="quote-total-val">$0</div>
+    </div>
+    <div style="margin-top:14px">
+      <button onclick="openSaveQuote()" style="width:100%;padding:12px;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.15);border-radius:var(--r);color:#fff;font-size:14px;cursor:pointer;font-family:var(--fb);font-weight:600;display:flex;align-items:center;justify-content:center;gap:8px;transition:all 0.15s" onmouseover="this.style.background='rgba(255,255,255,0.18)'" onmouseout="this.style.background='rgba(255,255,255,0.1)'"><i class="ti ti-bookmark" style="font-size:15px"></i> Save quote</button>
+      <div style="font-size:11px;color:rgba(255,255,255,0.3);text-align:center;margin-top:8px">Email and PDF available after saving</div>
+    </div>
+  </div>
+</div>
+
+</div>
+</div>
+</div>
+
+
+<!-- ALL PRICING -->
+<div class="page" id="page-pricing">
+<div class="ph"><div class="pt">All Pricing</div><div class="ps">Your trade cost vs what a customer pays direct. The gap is yours.</div></div>
+<div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap">
+  <div style="font-size:12px;color:var(--ink3)">Showing at</div>
+  <div class="qbr" id="pt-qty-btns">
+    <button class="qb" onclick="setPtQty(2,this)">1-2</button>
+    <button class="qb" onclick="setPtQty(9,this)">3-9</button>
+    <button class="qb" onclick="setPtQty(49,this)">10-49</button>
+    <button class="qb active" onclick="setPtQty(199,this)">50-199</button>
+    <button class="qb" onclick="setPtQty(499,this)">200-499</button>
+    <button class="qb" onclick="setPtQty(999,this)">500+</button>
+  </div>
+  <div style="font-size:12px;color:var(--ink3)">units</div>
+</div>
+<div class="ptw">
+  <div class="pth"><span>Product</span><span>Your trade cost</span><span>Customer direct</span><span></span></div>
+  <div id="pt-body"></div>
+</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px">
+  <div class="card" style="padding:12px 14px"><div style="font-size:12px;color:var(--ink2);line-height:1.65"><strong>Trade cost</strong> = what you pay as a printer on a trade account. <strong>Customer direct</strong> = what they would pay buying from Colour Plane without you.</div></div>
+  <div class="card" style="padding:12px 14px;background:var(--green-bg);border-color:rgba(59,109,17,0.15)"><div style="font-size:12px;color:var(--green);line-height:1.65"><strong>Use the profit calculator</strong> to find your exact margin after your own costs.</div><button onclick="showPage('profit')" style="margin-top:8px;padding:6px 12px;background:var(--green);border:none;border-radius:var(--r);color:#fff;font-size:12px;cursor:pointer;font-family:var(--fb)">Open calculator</button></div>
+</div>
+</div>
+
+<!-- BRAND / CLIENT PITCH -->
+<div class="page" id="page-brand">
+<div class="ph"><div class="pt">Show Your Client the Possibilities</div><div class="ps">Show your client why Blanks by Colour Plane are the right choice.</div></div>
+<div class="tc2">
+  <div>
+    <div class="card" style="margin-bottom:11px">
+      <div class="clbl">Job details</div>
+      <div class="fg2">
+        <div class="fg"><label>Client type</label>
+          <select id="b-client"><option>Streetwear brand</option><option>Cafe / hospitality</option><option>Run club / sports team</option><option>Music / artist merch</option><option>Corporate gifting</option><option>School / university</option></select>
+        </div>
+        <div class="fg"><label>Garment</label>
+          <select id="b-garment">
+            <option value="baby-tee">Baby T-shirt / Ringer Tee</option>
+            <option value="hw-tee">Heavyweight T-shirt</option>
+            <option value="everyday-tee">Everyday T-shirt</option>
+            <option value="ls-tee">Long Sleeve T-shirt</option>
+            <option value="acid-zip">Acid Washed Zip-Up</option>
+            <option value="acid-crew">Acid Washed Crewneck</option>
+            <option value="hw-hoodie" selected>Heavyweight Hoodie</option>
+            <option value="hw-crew">Heavyweight Crewneck</option>
+            <option value="dad-cap">Caps</option>
+            <option value="tote">Heavyweight Tote Bag</option>
+          </select>
+        </div>
+        <div class="fg"><label>Decorated cost to client (per unit)</label><div class="ip"><span class="pfx">$</span><input type="number" id="b-landed" value="75" step="1" oninput="updateBrand()"></div></div>
+        <div class="fg"><label>Units client plans to sell</label><input type="number" id="b-units" value="50" step="10" min="1" oninput="updateBrand()"></div>
+        <div class="fg full">
+          <label>Client retail price band</label>
+          <div class="qbr" id="band-btns" style="margin-top:5px"></div>
+          <div class="band-info" id="band-info">Typical retail for this garment</div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="clbl">Why it works</div>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <div style="display:flex;gap:9px;padding:9px;background:var(--surface2);border-radius:var(--r);font-size:12px;color:var(--ink2)"><i class="ti ti-trending-up" style="font-size:13px;flex-shrink:0;margin-top:1px"></i><div><strong>Increase your brand equity.</strong> Premium blanks elevate how your client's brand is perceived.</div></div>
+        <div style="display:flex;gap:9px;padding:9px;background:var(--surface2);border-radius:var(--r);font-size:12px;color:var(--ink2)"><i class="ti ti-repeat" style="font-size:13px;flex-shrink:0;margin-top:1px"></i><div><strong>Better sell-through.</strong> Premium merch moves 80-100% vs 50-60% for basics — less dead stock.</div></div>
+      </div>
+      <button onclick="addProductToQuote()" id="add-to-quote-btn" style="width:100%;margin-top:12px;padding:12px;background:#3B6D11;color:#fff;border:none;border-radius:var(--r);font-size:14px;font-family:Lato,sans-serif;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:background 0.15s">
+        <i class="ti ti-plus" style="font-size:16px"></i> Add to quote
+      </button>
+    </div>
+  </div>
+  <div>
+    <div class="res">
+      <div style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:rgba(255,255,255,0.3);font-family:var(--fm);margin-bottom:10px">Client Profit Projection</div>
+      <div class="rrow"><span class="rl">Decorated cost per unit</span><span class="rv" id="b-r-cost">$75.00</span></div>
+      <div class="rrow"><span class="rl">Units</span><span class="rv" id="b-r-units">50</span></div>
+      <div class="rrow"><span class="rl">Retail price range</span><span class="rv" id="b-r-range">-</span></div>
+      <div class="rrow" style="border-top:1px solid rgba(255,255,255,0.1);margin-top:3px;padding-top:8px"><span class="rl" style="color:rgba(255,255,255,0.7)">Client profit per unit</span><span class="rv" id="b-r-ppu">-</span></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0 5px;border-top:1px solid rgba(255,255,255,0.1);margin-top:3px">
+        <div><div style="font-family:var(--fh);font-size:12px;color:rgba(255,255,255,0.55)">Total profit potential</div><div style="font-size:10px;color:rgba(255,255,255,0.3);font-family:var(--fm);margin-top:2px" id="b-r-drop">Full 50-piece sellout</div></div>
+        <div class="bign" style="font-size:20px" id="b-r-total">-</div>
+      </div>
+      <div class="pitchbox"><div class="pitchlbl">Use this with your client</div><div class="pitchtxt" id="b-pitch">Select a garment and fill in the details.</div></div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- PRODUCTS -->
+<div class="page" id="page-products">
+<div class="ph"><div class="pt">Products + Specs</div><div class="ps">All Colour Plane blanks — specs and colourways.</div></div>
+<div id="prod-sections"></div>
+</div>
+
+<!-- RESOURCES -->
+<div class="page" id="page-resources">
+<div class="ph"><div class="pt">Resources</div><div class="ps">Download assets and pricing for your workflow.</div></div>
+<div style="display:flex;flex-direction:column;gap:14px;max-width:600px">
+  <div class="card" style="padding:20px 24px">
+    <div class="clbl">Digital Assets</div>
+    <div style="font-size:13px;color:var(--ink2);margin-bottom:14px;line-height:1.6">Integrate us into your website or systems :)</div>
+    <a href="https://www.dropbox.com/scl/fo/8zl67g0e1tresy9oq4d4s/AAvO9uV-4lvBxGytj9GUvuo?rlkey=oc1jp88e8dv0s96buyukm58a7&st=pelcyem2&dl=0" target="_blank" style="display:inline-flex;align-items:center;gap:8px;padding:10px 18px;background:var(--ink);color:#fff;border-radius:var(--r);font-size:13px;font-family:var(--fb);text-decoration:none"><i class="ti ti-folder-open" style="font-size:15px"></i> Open Dropbox folder</a>
+  </div>
+  <div class="card" style="padding:20px 24px">
+    <div class="clbl">Trade Pricing</div>
+    <div style="font-size:13px;color:var(--ink2);margin-bottom:14px;line-height:1.6">Full trade price list — all SKUs, all quantity tiers, AUD.</div>
+    <a href="https://www.dropbox.com/scl/fo/ee0pso8ba0exyd4dmv9l2/AF7QMrCZgbwMu4j4HWwwHBA?rlkey=6o2t7srk633ap7zcejn18i51p&st=cneq0hv9&dl=0" target="_blank" style="display:inline-flex;align-items:center;gap:8px;padding:10px 18px;background:var(--ink);color:#fff;border-radius:var(--r);font-size:13px;font-family:var(--fb);text-decoration:none"><i class="ti ti-download" style="font-size:15px"></i> Download CSV</a>
+  </div>
+</div>
+</div>
+
+<!-- SAVED QUOTES -->
+<div class="page" id="page-saved">
+<div class="ph" style="display:flex;justify-content:space-between;align-items:flex-start">
+  <div><div class="pt">Saved Quotes</div><div class="ps">Your quotes are saved for this session.</div></div>
+  <button onclick="exportSavedToExcel()" style="padding:8px 14px;background:var(--ink);color:#fff;border:none;border-radius:var(--r);font-size:12px;cursor:pointer;font-family:var(--fb);display:flex;align-items:center;gap:6px;white-space:nowrap;margin-top:4px;transition:background 0.15s" onmouseover="this.style.background='#001f4a'" onmouseout="this.style.background='var(--ink)'"><i class="ti ti-file-spreadsheet" style="font-size:14px"></i> Export all to Excel</button>
+</div>
+<div class="sq-note"><i class="ti ti-info-circle" style="margin-right:6px"></i>Quotes are stored while your browser tab is open. Export as PDF or copy as email to keep a permanent record.</div>
+<div id="sq-list">
+  <div class="sq-empty" id="sq-empty">
+    <i class="ti ti-bookmark"></i>
+    <p>No saved quotes yet.<br>Build a quote in the calculator and hit Save.</p>
+    <button onclick="showPage('profit')" style="margin-top:16px;padding:9px 20px;background:var(--ink);color:#fff;border:none;border-radius:var(--r);font-size:13px;cursor:pointer;font-family:var(--fb)">Build a quote</button>
+  </div>
+</div>
+</div>
+
+</div><!-- /main -->
+</div><!-- /shell -->
+
+<!-- EMAIL MODAL -->
+<div class="email-modal-overlay" id="email-modal">
+  <div class="email-modal-box">
+    <div class="email-modal-title">Copy quote as email</div>
+    <div class="email-modal-sub">Client-facing only — no costs or margins included.</div>
+    <div class="email-preview" id="email-preview-text"></div>
+    <div class="email-btns">
+      <button class="email-close-btn" onclick="closeEmailModal()">Close</button>
+      <button class="email-copy-btn" id="email-copy-btn" onclick="copyEmail()"><i class="ti ti-copy" style="font-size:14px"></i> Copy to clipboard</button>
+    </div>
+  </div>
+</div>
+
+<!-- SAVE QUOTE MODAL -->
+<div class="modal-overlay" id="quote-modal">
+  <div class="modal-box">
+    <div id="modal-form-view">
+      <div class="modal-title">Save this quote</div>
+      <div class="modal-sub">Who is this quote for?</div>
+      <div class="modal-hint">Save a client or job name so you can find this quote later — e.g. "Run Club Melbourne"</div>
+      <div class="modal-field"><label>Client / Job name</label><input type="text" id="quote-client" placeholder="e.g. Run Club Melbourne"></div>
+      <div class="modal-summary" id="modal-summary"></div>
+      <div class="modal-btns">
+        <button class="modal-btn-cancel" onclick="closeQuoteModal()">Cancel</button>
+        <button class="modal-btn-save" onclick="saveQuote()">Save quote</button>
+      </div>
+    </div>
+    <div id="modal-success-view" style="display:none">
+      <div class="modal-success">
+        <i class="ti ti-circle-check"></i>
+        <div class="modal-success-title">Quote saved</div>
+        <div class="modal-success-sub" id="modal-success-msg">Saved for your records.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+var PRODS = {
+  'baby-tee':    {name:'Baby T-shirt / Ringer Tee', cat:'T-Shirts',            trade:10.50, ws:[26.50,20,17,15.50,14.50,13.75], retail:35,  gsm:'200gsm',  fabric:'100% cotton jersey',                    fit:'Cropped body, cropped sleeves, thick neck ribbing',              sizes:'XS-2XL', colors:[{n:'Black',h:'#1A1A1A'},{n:'White',h:'#F2F2F2'},{n:'Ringer',h:'#DDDDDD'}],                                                                                                                          badge:'',    bands:[[35,50],[55,70],[75,90]]},
+  'hw-tee':      {name:'Heavyweight T-shirt',        cat:'T-Shirts',            trade:14.25, ws:[35,27,21.50,19.50,18.50,17.75],  retail:50,  gsm:'245gsm',  fabric:'100% cotton',                           fit:'Heavyweight, boxy silhouette',                                  sizes:'XS-3XL', colors:[{n:'Black',h:'#1A1A1A'},{n:'White',h:'#F2F2F2'},{n:'Off-White',h:'#F5F0E8'},{n:'Brown',h:'#6D4C41'},{n:'Forest Green',h:'#2E5D34'},{n:'Navy',h:'#1A2744'}],              badge:'hot', bands:[[55,70],[75,90],[95,110]]},
+  'everyday-tee':{name:'Everyday T-shirt',           cat:'T-Shirts',            trade:10.25, ws:[26.50,20,17,15.50,14.50,13.75],  retail:35,  gsm:'180gsm',  fabric:'100% cotton',                           fit:'Relaxed everyday fit',                                          sizes:'XS-2XL', colors:[{n:'Black',h:'#1A1A1A'},{n:'White',h:'#F2F2F2'}],                                                                                                                          badge:'',    bands:[[35,50],[50,65],[65,80]]},
+  'ls-tee':      {name:'Long Sleeve T-shirt',        cat:'T-Shirts',            trade:17,    ws:[40,32,25.50,22.50,21.25,20.50],  retail:59,  gsm:'180gsm',  fabric:'100% cotton',                           fit:'Long sleeve, relaxed fit',                                      sizes:'XS-2XL', colors:[{n:'Black',h:'#1A1A1A'},{n:'White',h:'#F2F2F2'}],                                                                                                                          badge:'',    bands:[[60,75],[80,95],[100,120]]},
+  'acid-zip':    {name:'Acid Washed Zip-Up',         cat:'Hoodies + Crewnecks', trade:46.25, ws:[95,73,58.50,54.50,52.50,51.25],  retail:140, gsm:'460gsm',  fabric:'100% cotton french terry, acid wash',   fit:'Cropped, boxy, slit pockets, double metal zips, double layered hood', sizes:'XS-2XL', colors:[{n:'Black',h:'#2A2A2A'},{n:'Stone',h:'#C9B99A'},{n:'Navy',h:'#1A2744'}],                                                                                            badge:'',    bands:[[140,170],[175,200],[210,240]]},
+  'acid-crew':   {name:'Acid Washed Crewneck',       cat:'Hoodies + Crewnecks', trade:38.50, ws:[78.50,62,50,46,44,42.50],        retail:110, gsm:'460gsm',  fabric:'100% cotton french terry, acid wash',   fit:'Boxy silhouette, thick neck ribbing',                            sizes:'XS-2XL', colors:[{n:'Black',h:'#2A2A2A'},{n:'Stone',h:'#C9B99A'},{n:'Navy',h:'#1A2744'}],                                                                                            badge:'',    bands:[[110,130],[135,160],[165,190]]},
+  'hw-hoodie':   {name:'Heavyweight Hoodie',         cat:'Hoodies + Crewnecks', trade:34.25, ws:[80,60.50,47.50,44.50,42.75,41.25],retail:110, gsm:'375gsm', fabric:'100% cotton fleece, peached exterior',  fit:'Boxy silhouette, slit pockets, double layered hood',             sizes:'XS-3XL', colors:[{n:'Black',h:'#1A1A1A'},{n:'Grey',h:'#9E9E9E'},{n:'Vintage Black',h:'#2C2C2A'},{n:'Royal Blue',h:'#1565C0'},{n:'Brown',h:'#6D4C41'},{n:'Navy',h:'#1A2744'}],    badge:'hot', bands:[[90,110],[120,140],[150,180]]},
+  'hw-crew':     {name:'Heavyweight Crewneck',       cat:'Hoodies + Crewnecks', trade:26.50, ws:[65,48,38,35,33.50,32.25],        retail:90,  gsm:'375gsm',  fabric:'100% cotton fleece, peached exterior',  fit:'Boxy silhouette, ribbed neck',                                  sizes:'XS-2XL', colors:[{n:'Black',h:'#1A1A1A'},{n:'Grey',h:'#9E9E9E'}],                                                                                                                   badge:'',    bands:[[80,95],[100,120],[125,150]]},
+  'dad-cap':     {name:'Caps',                       cat:'Accessories',         trade:9.75,  ws:[26.50,22.50,19,15.50,14.50,13.50],retail:35,  gsm:'N/A',    fabric:'100% cotton',                           fit:'Dad cap, unstructured, one size',                                sizes:'One size',colors:[{n:'Black',h:'#1A1A1A'},{n:'White',h:'#F2F2F2'},{n:'Navy',h:'#1A2744'}],                                                                                              badge:'',    bands:[[35,45],[50,60],[65,80]]},
+  'tote':        {name:'Heavyweight Tote Bag',       cat:'Accessories',         trade:9,     ws:[25,19,15.50,13.50,12.50,11.75],  retail:32,  gsm:'340gsm',  fabric:'100% cotton twill',                     fit:'Internal pocket, long shoulder strap',                          sizes:'One size',colors:[{n:'Black',h:'#1A1A1A'},{n:'Natural',h:'#F5F0E8'},{n:'Navy',h:'#1A2744'},{n:'Purple',h:'#7B1FA2'}],                                                                badge:'',    bands:[[32,45],[50,65],[70,85]]}
+};
+
+var TIERS = [{l:'1-2',max:2},{l:'3-9',max:9},{l:'10-49',max:49},{l:'50-199',max:199},{l:'200-499',max:499},{l:'500+',max:1e9}];
+function getTier(q){for(var i=0;i<TIERS.length;i++)if(q<=TIERS[i].max)return i;return 5}
+
+var calcQty=50, ptQty=199, marginMode='pct', currentBand=1;
+var calcComplete = false;
+var savedQuotes = [];
+
+function showPage(id){
+  document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active')});
+  var pg = document.getElementById('page-'+id);
+  if(pg) pg.classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(function(b){b.classList.remove('active')});
+  var nb = document.getElementById('nav-'+id);
+  if(nb) nb.classList.add('active');
+  if(id==='saved') renderSavedQuotes();
+  if(id==='products') renderProds();
+}
+
+// ── GATE ─────────────────────────────────────────────────────────
+document.getElementById('cp-gate-btn').addEventListener('click', function(){
+  var n = document.getElementById('cpg-name').value.trim();
+  var c = document.getElementById('cpg-company').value.trim();
+  var e = document.getElementById('cpg-email').value.trim();
+  var err = document.getElementById('cp-gate-err');
+  if(!n||!c||!e){err.style.display='block';err.textContent='Please fill in all fields.';return}
+  if(e.indexOf('@')===-1){err.style.display='block';err.textContent='Please enter a valid email.';return}
+  err.style.display='none';
+  try{
+    sessionStorage.setItem('cpg_passed','1');
+    sessionStorage.setItem('cpg_name',n);
+    sessionStorage.setItem('cpg_company',c);
+    sessionStorage.setItem('cpg_email',e);
+  }catch(ex){}
+  fetch('https://docs.google.com/forms/d/e/1FAIpQLSeeHZJY4Xmu6nbUvWBDCN7XnWMEXAT12nDHf1cGxKyFqaQEeQ/formResponse',{
+    method:'POST',mode:'no-cors',
+    headers:{'Content-Type':'application/x-www-form-urlencoded'},
+    body:'entry.1989573006='+encodeURIComponent(n)+'&entry.931851247='+encodeURIComponent(c)+'&entry.498753990='+encodeURIComponent(e)
+  }).catch(function(){});
+  document.getElementById('cp-gate').style.display='none';
+  var sub=document.getElementById('home-sub');
+  if(sub) sub.textContent='Welcome, '+n+'. Your trade pricing, profit tools, and product resources are ready.';
+});
+
+// Check session
+(function(){
+  try{
+    if(sessionStorage.getItem('cpg_passed')==='1'){
+      document.getElementById('cp-gate').style.display='none';
+      var n=sessionStorage.getItem('cpg_name')||'';
+      if(n){var sub=document.getElementById('home-sub');if(sub)sub.textContent='Welcome back, '+n+'. Your trade pricing, profit tools, and product resources are ready.';}
+    }
+  }catch(ex){}
+})();
+
+// ── CALCULATOR ───────────────────────────────────────────────────
+function f2(n){return'$'+n.toFixed(2)}
+function fk(n){return'$'+Math.round(n).toLocaleString()}
+
+function onGarmentChange(){
+  var key=document.getElementById('calc-garment').value;
+  var p=PRODS[key]; if(!p)return;
+  var ti=getTier(calcQty);
+  document.getElementById('cp-price-display').textContent='$'+p.trade.toFixed(2);
+  document.getElementById('cp-tier-display').textContent='per unit at '+TIERS[ti].l;
+  renderTier(key);
+  updateCalc();
+}
+
+function setCalcQty(n,btn){
+  calcQty=n;
+  document.querySelectorAll('#calc-qty-row .qb').forEach(function(b){b.classList.remove('active')});
+  btn.classList.add('active');
+  onGarmentChange();
+}
+
+function renderTier(key){
+  var p=PRODS[key]; if(!p)return;
+  var ti=getTier(calcQty);
+  var tbl=document.getElementById('tier-tbl'); if(!tbl)return;
+  tbl.innerHTML='';
+  var head=document.createElement('thead');
+  head.innerHTML='<tr><th>Qty</th><th>Your trade cost</th><th>Customer direct</th></tr>';
+  tbl.appendChild(head);
+  var body=document.createElement('tbody');
+  TIERS.forEach(function(t,i){
+    var tr=document.createElement('tr');
+    if(i===ti) tr.className='hl';
+    tr.innerHTML='<td>'+t.l+'</td><td class="tc">$'+p.trade.toFixed(2)+'</td><td>$'+p.ws[i].toFixed(2)+'</td>';
+    body.appendChild(tr);
+  });
+  tbl.appendChild(body);
+}
+
+function setMarginMode(mode){
+  marginMode=mode;
+  ['pct','dollar','sell'].forEach(function(m){
+    document.getElementById('mtab-'+m).classList.toggle('active',m===mode);
+    document.getElementById('margin-'+m+'-input').style.display=m===mode?'block':'none';
+  });
+  updateCalc();
+}
+
+function updateCalc(){
+  var key=document.getElementById('calc-garment').value;
+  var p=PRODS[key]; if(!p)return;
+  var bl=p.trade;
+  var pr=parseFloat(document.getElementById('print-cost').value)||0;
+  var su=parseFloat(document.getElementById('setup-cost').value)||0;
+  var fr=parseFloat(document.getElementById('freight-cost').value)||0;
+  var ti=getTier(calcQty), ws=p.ws[ti], base=bl+pr+su+fr;
+  var sell=0,profit=0,margin=0;
+  if(marginMode==='pct'){
+    var pct=parseFloat(document.getElementById('margin-pct').value);
+    if(isNaN(pct)||pct<=0||pct>=100){showInc();return}
+    sell=base/(1-pct/100);profit=sell-base;margin=pct;
+  } else if(marginMode==='dollar'){
+    var dol=parseFloat(document.getElementById('margin-dollar').value);
+    if(isNaN(dol)||dol<0){showInc();return}
+    profit=dol;sell=base+dol;margin=sell>0?profit/sell*100:0;
+  } else {
+    sell=parseFloat(document.getElementById('sell-price').value);
+    if(isNaN(sell)||sell<=0){showInc();return}
+    profit=sell-base;margin=profit/sell*100;
+  }
+  if(pr===0&&su===0&&fr===0){showInc();return}
+  showFilled();
+  document.getElementById('pb-blank').style.flex=Math.max(bl,0.1);
+  document.getElementById('pb-other').style.flex=Math.max(pr+su+fr,0.01);
+  document.getElementById('pb-profit').style.flex=Math.max(profit,0.01);
+  document.getElementById('pb-blank-v').textContent=f2(bl);
+  document.getElementById('pb-other-v').textContent=f2(pr+su+fr);
+  document.getElementById('pb-pv').textContent=f2(profit);
+  document.getElementById('pb-profit').style.background=margin>=40?'#3B6D11':margin>=25?'#854F0B':'#A32D2D';
+  var m=Math.round(margin);
+  var pill=document.getElementById('margin-pill');
+  pill.textContent=m+'% margin';
+  pill.className='mp '+(margin>=40?'mp-hi':margin>=25?'mp-mid':'mp-lo');
+  document.getElementById('r-blank').textContent=f2(bl);
+  document.getElementById('r-print').textContent=f2(pr);
+  document.getElementById('r-setup').textContent=f2(su);
+  document.getElementById('r-freight').textContent=f2(fr);
+  document.getElementById('r-total').textContent=f2(base);
+  document.getElementById('r-sell').textContent=f2(sell);
+  document.getElementById('r-ppu').textContent=f2(profit);
+  document.getElementById('r-total-profit').textContent=fk(profit*calcQty);
+  document.getElementById('r-margin').textContent=m+'%';
+  document.getElementById('r-qty-lbl').textContent='x '+calcQty+' units';
+
+
+}
+
+function showInc(){
+  calcComplete = false;
+  document.getElementById('profit-bar-wrap').style.display='none';
+  document.getElementById('incomplete-msg').style.display='flex';
+  document.getElementById('results-filled').style.display='none';
+  document.getElementById('results-inc').style.display='flex';
+}
+function showFilled(){
+  calcComplete = true;
+  document.getElementById('profit-bar-wrap').style.display='block';
+  document.getElementById('incomplete-msg').style.display='none';
+  document.getElementById('results-filled').style.display='block';
+  document.getElementById('results-inc').style.display='none';
+}
+
+// ── PRICING TABLE ─────────────────────────────────────────────────
+function renderPt(){
+  var ti=getTier(ptQty);
+  var body=document.getElementById('pt-body');
+  if(!body)return;
+  body.innerHTML='';
+  Object.entries(PRODS).forEach(function(e){
+    var k=e[0],p=e[1];
+    var row=document.createElement('div');
+    row.className='ptr';
+    row.innerHTML='<div><div class="ptrn">'+p.name+'</div><div class="ptrc">'+p.cat+'</div></div>'
+      +'<div class="ptrt">$'+p.trade.toFixed(2)+'</div>'
+      +'<div class="ptrw">$'+p.ws[ti].toFixed(2)+'</div>'
+      +'<div><button class="ulnk">Use in calc</button></div>';
+    row.addEventListener('click',function(){useInCalc(k)});
+    body.appendChild(row);
+  });
+}
+
+function setPtQty(n,btn){
+  ptQty=n;
+  document.querySelectorAll('#pt-qty-btns .qb').forEach(function(b){b.classList.remove('active')});
+  btn.classList.add('active');
+  renderPt();
+}
+
+function useInCalc(key){
+  document.getElementById('calc-garment').value=key;
+  onGarmentChange();
+  showPage('profit');
+}
+
+// ── BRAND SELL-THROUGH ────────────────────────────────────────────
+function renderBandBtns(){
+  var key=document.getElementById('b-garment').value;
+  var p=PRODS[key]; if(!p)return;
+  var labels=['Budget','Standard','Premium'];
+  var container=document.getElementById('band-btns'); if(!container)return;
+  container.innerHTML='';
+  p.bands.forEach(function(b,i){
+    var btn=document.createElement('button');
+    btn.className='qb'+(i===currentBand?' active':'');
+    btn.textContent=labels[i]+' $'+b[0]+'-$'+b[1];
+    btn.addEventListener('click',function(){currentBand=i;renderBandBtns();updateBrand();});
+    container.appendChild(btn);
+  });
+  var info=document.getElementById('band-info');
+  if(info) info.textContent='Typical retail range for '+p.name;
+}
+
+function updateBrand(){
+  var key=document.getElementById('b-garment').value;
+  var p=PRODS[key]; if(!p)return;
+  var landed=parseFloat(document.getElementById('b-landed').value)||0;
+  var units=parseInt(document.getElementById('b-units').value)||1;
+  var band=p.bands[currentBand]||p.bands[1];
+  var lo=band[0],hi=band[1];
+  var pLo=lo-landed,pHi=hi-landed;
+  var tLo=pLo*units,tHi=pHi*units;
+  var invest=landed*units;
+  document.getElementById('b-r-cost').textContent=f2(landed);
+  document.getElementById('b-r-units').textContent=units;
+  document.getElementById('b-r-range').textContent='$'+lo+' - $'+hi;
+  document.getElementById('b-r-ppu').textContent='$'+Math.round(pLo)+' - $'+Math.round(pHi);
+  document.getElementById('b-r-total').textContent='$'+Math.round(tLo).toLocaleString()+'-$'+Math.round(tHi).toLocaleString();
+  document.getElementById('b-r-drop').textContent='Full '+units+'-piece sellout';
+  document.getElementById('b-pitch').textContent='"A '+units+'-piece '+p.name.toLowerCase()+' drop at $'+hi+' retail returns up to $'+Math.round(tHi).toLocaleString()+' profit - from a $'+Math.round(invest).toLocaleString()+' investment."';
+}
+
+document.getElementById('b-garment').addEventListener('change',function(){currentBand=1;renderBandBtns();updateBrand();});
+document.getElementById('b-landed').addEventListener('input',updateBrand);
+document.getElementById('b-units').addEventListener('input',updateBrand);
+document.getElementById('b-client').addEventListener('change',updateBrand);
+
+// ── PRODUCTS ──────────────────────────────────────────────────────
+function toggleProd(key){
+  var card=document.getElementById('pc-'+key);
+  if(card) card.classList.toggle('expanded');
+}
+
+function renderProds(){
+  var cats=['T-Shirts','Hoodies + Crewnecks','Accessories'];
+  var container=document.getElementById('prod-sections');
+  if(!container)return;
+  container.innerHTML='';
+  cats.forEach(function(cat){
+    var items=Object.entries(PRODS).filter(function(e){return e[1].cat===cat});
+    if(!items.length)return;
+    var sec=document.createElement('div');
+    sec.style.marginBottom='22px';
+    var lbl=document.createElement('div');
+    lbl.style.cssText='font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--ink3);font-family:var(--fm);margin-bottom:9px';
+    lbl.textContent=cat;
+    sec.appendChild(lbl);
+    items.forEach(function(e){
+      var k=e[0],p=e[1];
+      var card=document.createElement('div');
+      card.className='prod-card';
+      card.id='pc-'+k;
+      var swatches=p.colors.map(function(c){return'<span class="pswatch" style="background:'+c.h+'" title="'+c.n+'"></span>';}).join('');
+      var colorNames=p.colors.map(function(c){return c.n;}).join(' · ');
+      var badge=p.badge==='hot'?'<div class="pbadge badge-hot">Bestseller</div>':'';
+      card.innerHTML='<div class="prod-head">'
+        +'<div><div style="font-family:var(--fh);font-size:13px;margin-bottom:2px">'+p.name+'</div>'
+        +'<div style="font-size:11px;color:var(--ink3);font-family:var(--fm)">'+p.gsm+' &bull; '+p.sizes+'</div>'+badge+'</div>'
+        +'</div>'
+        +'<div class="prod-body">'
+        +'<div style="font-size:10px;color:var(--ink3);letter-spacing:0.08em;text-transform:uppercase;font-family:var(--fm);margin-bottom:5px">Construction</div>'
+        +'<div style="font-size:12px;color:var(--ink2);margin-bottom:6px">'+p.fit+'</div>'
+        +'<span class="spill">'+p.gsm+'</span><span class="spill">'+p.fabric+'</span>'
+        +'<div style="font-size:10px;color:var(--ink3);letter-spacing:0.08em;text-transform:uppercase;font-family:var(--fm);margin:8px 0 5px">Colourways</div>'
+        +'<div style="margin-bottom:4px">'+swatches+'</div>'
+        +'<div style="font-size:11px;color:var(--ink3);margin-bottom:12px">'+colorNames+'</div>'
+        +'</div>';
+      card.addEventListener('click',function(){toggleProd(k);});
+      sec.appendChild(card);
+    });
+    container.appendChild(sec);
+  });
+}
+
+// ── SAVE QUOTE MODAL ──────────────────────────────────────────────
+function openSaveQuote(){
+  if(quoteLines.length===0){alert('Add at least one product to the quote first.');return;}
+  // Pre-fill client name if already known
+  document.getElementById('modal-form-view').style.display='block';
+  document.getElementById('modal-success-view').style.display='none';
+  document.querySelector('.modal-title').textContent='Save this quote';
+  document.querySelector('.modal-sub').textContent='Save for your records';
+  document.querySelector('.modal-hint').textContent='';
+  document.querySelector('.modal-btn-save').textContent='Save quote';
+  document.querySelector('.modal-btn-save').onclick = saveQuote;
+  // Summary of all lines
+  var ms=document.getElementById('modal-summary');
+  if(ms){
+    ms.innerHTML='';
+    quoteLines.forEach(function(q){
+      var row=document.createElement('div');
+      row.innerHTML='<span>'+q.garment+'</span> &middot; '+q.qty+' units &middot; '+q.totalProfit+' profit';
+      ms.appendChild(row);
+    });
+  }
+  var ci=document.getElementById('quote-client');
+  ci.value=currentQuoteClient||'';
+  document.getElementById('quote-modal').classList.add('open');
+  setTimeout(function(){if(!currentQuoteClient)ci.focus();},100);
+}
+
+function closeQuoteModal(){document.getElementById('quote-modal').classList.remove('open')}
+
+function saveQuote(){
+  var client=document.getElementById('quote-client').value.trim();
+  if(!client){document.getElementById('quote-client').style.borderColor='#c0392b';return;}
+  document.getElementById('quote-client').style.borderColor='';
+  currentQuoteClient=client;
+  var today=new Date().toLocaleDateString('en-AU',{day:'numeric',month:'short',year:'numeric'});
+  // Calculate grand total profit
+  var grandTotal=0;
+  quoteLines.forEach(function(q){
+    grandTotal+=parseFloat((q.totalProfit||'').replace('$','').replace(',',''))||0;
+  });
+  var summary=quoteLines.map(function(q){return q.garment+' x'+q.qty;}).join(', ');
+  // Save to session savedQuotes
+  savedQuotes.unshift({
+    client:client,
+    lines:quoteLines.slice(),
+    summary:summary,
+    totalProfit:'$'+Math.round(grandTotal).toLocaleString(),
+    date:today
+  });
+  // Reset quote lines for next quote
+  quoteLines=[];
+  currentQuoteClient='';
+  renderQuoteLines();
+  // Show success
+  document.getElementById('modal-form-view').style.display='none';
+  document.getElementById('modal-success-view').style.display='block';
+  var msg=document.getElementById('modal-success-msg');
+  if(msg){
+    msg.innerHTML='';
+    msg.appendChild(document.createTextNode('Quote for "'+client+'" saved. '));
+    var lnk=document.createElement('a');
+    lnk.href='#';lnk.style.color='var(--green)';lnk.textContent='View saved quotes';
+    lnk.addEventListener('click',function(ev){ev.preventDefault();closeQuoteModal();showPage('saved');});
+    msg.appendChild(lnk);
+  }
+  setTimeout(function(){closeQuoteModal();},2500);
+}
+
+document.getElementById('quote-modal').addEventListener('click',function(e){if(e.target===this)closeQuoteModal();});
+document.getElementById('quote-client').addEventListener('keydown',function(e){if(e.key==='Enter')saveQuote();});
+
+// ── SAVED QUOTES ──────────────────────────────────────────────────
+function renderSavedQuotes(){
+  var list=document.getElementById('sq-list');
+  var empty=document.getElementById('sq-empty');
+  if(!list)return;
+  if(savedQuotes.length===0){if(empty)empty.style.display='block';var og=list.querySelector('.sq-grid');if(og)list.removeChild(og);return}
+  if(empty)empty.style.display='none';
+  var og2=list.querySelector('.sq-grid');if(og2)list.removeChild(og2);
+  var grid=document.createElement('div');grid.className='sq-grid';
+  savedQuotes.forEach(function(q,i){
+    var card=document.createElement('div');card.className='sq-card';
+    var left=document.createElement('div');
+    var clientDiv=document.createElement('div');clientDiv.className='sq-client';clientDiv.textContent=q.client;
+    var metaDiv=document.createElement('div');metaDiv.className='sq-meta';
+    if(q.lines&&q.lines.length){
+      metaDiv.innerHTML=q.lines.map(function(l){return l.garment+' &middot; '+l.qty+' units';}).join('<br>');
+    } else {
+      metaDiv.innerHTML=(q.garment||'')+' &middot; '+(q.qty||'')+' units';
+    }
+    var actions=document.createElement('div');actions.className='sq-actions';
+    var openBtn=document.createElement('button');openBtn.className='sq-act';openBtn.textContent='Open in calculator';
+    openBtn.addEventListener('click',function(){
+      document.getElementById('calc-garment').value=(q.lines&&q.lines[0]?q.lines[0].garmentKey:q.garmentKey)||'hw-hoodie';
+      setMarginMode('sell');
+      var sp=document.getElementById('sell-price');
+      if(sp){sp.value=parseFloat(((q.lines&&q.lines[0]?q.lines[0].sell:q.sell)||'').replace('$',''));updateCalc();}
+      showPage('profit');
+    });
+    var emailBtn=document.createElement('button');emailBtn.className='sq-act';
+    emailBtn.innerHTML='<i class="ti ti-mail" style="font-size:11px;margin-right:3px"></i>Email';
+    emailBtn.addEventListener('click',function(){emailSavedQuote(i);});
+    var pdfBtn=document.createElement('button');pdfBtn.className='sq-act';
+    pdfBtn.innerHTML='<i class="ti ti-file-download" style="font-size:11px;margin-right:3px"></i>PDF';
+    pdfBtn.addEventListener('click',function(){pdfSavedQuote(i);});
+    var delBtn=document.createElement('button');delBtn.className='sq-act danger';delBtn.textContent='Delete';
+    delBtn.addEventListener('click',function(){savedQuotes.splice(i,1);renderSavedQuotes();});
+    actions.appendChild(openBtn);actions.appendChild(emailBtn);actions.appendChild(pdfBtn);actions.appendChild(delBtn);
+    left.appendChild(clientDiv);left.appendChild(metaDiv);left.appendChild(actions);
+    var right=document.createElement('div');right.className='sq-card-right';
+    var profitDiv=document.createElement('div');profitDiv.className='sq-profit';profitDiv.textContent=q.totalProfit||q.profit||'';
+    var marginDiv=document.createElement('div');marginDiv.className='sq-margin';marginDiv.textContent=q.margin&&q.margin!=='undefined'?q.margin+' margin':'';
+    var dateDiv=document.createElement('div');dateDiv.className='sq-date';dateDiv.textContent=q.date;
+    right.appendChild(profitDiv);right.appendChild(marginDiv);right.appendChild(dateDiv);
+    card.appendChild(left);card.appendChild(right);
+    grid.appendChild(card);
+  });
+  list.appendChild(grid);
+}
+
+// ── EMAIL QUOTE ───────────────────────────────────────────────────
+function openEmailQuote(){
+  if(document.getElementById('results-filled').style.display==='none'&&quoteLines.length===0){alert('Please complete your quote first.');return}
+  var printerName=sessionStorage.getItem('cpg_name')||'';
+  var printerCompany=sessionStorage.getItem('cpg_company')||'';
+  var today=new Date().toLocaleDateString('en-AU',{day:'numeric',month:'long',year:'numeric'});
+
+  // Build full line items list - combine saved lines + current product
+  var allLines=quoteLines.slice();
+  if(document.getElementById('results-filled').style.display!=='none'){
+    var garmentEl=document.getElementById('calc-garment');
+    var garment=garmentEl?garmentEl.options[garmentEl.selectedIndex].text:'';
+    var sell=(document.getElementById('r-sell')||{}).textContent||'';
+    var method=(document.getElementById('calc-method')||{}).value||'';
+    allLines.push({garment:garment,qty:calcQty,sell:sell,method:method});
+  }
+
+  var sep='--------------------';
+  var lineItems='';
+  var grandTotal=0;
+  allLines.forEach(function(line,i){
+    var sellNum=parseFloat((line.sell||'').replace('$',''))||0;
+    var qty=parseInt(line.qty)||0;
+    var lineTotal=sellNum*qty;
+    grandTotal+=lineTotal;
+    lineItems+='Item '+(i+1)+': '+line.garment+'\n';
+    lineItems+='  Quantity:       '+qty+' units\n';
+    lineItems+='  Print method:   '+line.method+'\n';
+    lineItems+='  Price per unit: $'+sellNum.toFixed(2)+' ex GST\n';
+    lineItems+='  Line total:     $'+Math.round(lineTotal).toLocaleString()+' ex GST\n\n';
+  });
+
+  var emailText='Hi,\n\nPlease find your quote below.\n\n'
+    +sep+'\n'
+    +'QUOTE - '+today+'\n'
+    +sep+'\n\n'
+    +lineItems
+    +sep+'\n'
+    +'TOTAL (ex GST):  $'+Math.round(grandTotal).toLocaleString()+'\n'
+    +sep+'\n\n'
+    +'All garments are Blanks by Colour Plane.\n\n'
+    +'Let me know if you have any questions.\n\n'
+    +'Thanks,\n'+printerName+(printerCompany?'\n'+printerCompany:'');
+
+  document.getElementById('email-preview-text').textContent=emailText;
+  document.getElementById('email-modal').classList.add('open');
+  var btn=document.getElementById('email-copy-btn');
+  btn.innerHTML='<i class="ti ti-copy" style="font-size:14px"></i> Copy to clipboard';
+  btn.classList.remove('copied');
+}
+
+function closeEmailModal(){document.getElementById('email-modal').classList.remove('open')}
+
+function copyEmail(){
+  var text=document.getElementById('email-preview-text').textContent;
+  navigator.clipboard.writeText(text).then(function(){
+    var btn=document.getElementById('email-copy-btn');
+    btn.innerHTML='<i class="ti ti-check" style="font-size:14px"></i> Copied!';
+    btn.classList.add('copied');
+    setTimeout(function(){closeEmailModal();},1500);
+  }).catch(function(){
+    var ta=document.createElement('textarea');ta.value=text;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);closeEmailModal();
+  });
+}
+
+document.getElementById('email-modal').addEventListener('click',function(e){if(e.target===this)closeEmailModal();});
+
+// ── EXPORT PDF ────────────────────────────────────────────────────
+function exportPDF(){
+  if(document.getElementById('results-filled').style.display==='none'&&quoteLines.length===0){
+    alert('Please complete your quote first.');return;
+  }
+  var printerName=sessionStorage.getItem('cpg_name')||'';
+  var printerCompany=sessionStorage.getItem('cpg_company')||'';
+  var today=new Date().toLocaleDateString('en-AU',{day:'numeric',month:'long',year:'numeric'});
+
+  // Combine saved lines + current product
+  var allLines=quoteLines.slice();
+  if(document.getElementById('results-filled').style.display!=='none'){
+    var garmentEl=document.getElementById('calc-garment');
+    var garment=garmentEl?garmentEl.options[garmentEl.selectedIndex].text:'';
+    var sell=(document.getElementById('r-sell')||{}).textContent||'';
+    var method=(document.getElementById('calc-method')||{}).value||'';
+    allLines.push({garment:garment,qty:calcQty,sell:sell,method:method});
+  }
+
+  var grandTotal=0;
+  var lineRows='';
+  allLines.forEach(function(line,i){
+    var sellNum=parseFloat((line.sell||'').replace('$',''))||0;
+    var qty=parseInt(line.qty)||0;
+    var lineTotal=sellNum*qty;
+    grandTotal+=lineTotal;
+    var bg=i%2===0?'#fafafa':'#fff';
+    lineRows+='<tr style="background:'+bg+'">'
+      +'<td style="padding:10px 14px;font-size:13px;color:#001128;border-bottom:1px solid #f0f0f0">'+line.garment+'</td>'
+      +'<td style="padding:10px 14px;font-size:13px;color:#888;border-bottom:1px solid #f0f0f0;text-align:center">'+qty+'</td>'
+      +'<td style="padding:10px 14px;font-size:13px;color:#888;border-bottom:1px solid #f0f0f0;text-align:center">'+line.method+'</td>'
+      +'<td style="padding:10px 14px;font-size:13px;color:#001128;border-bottom:1px solid #f0f0f0;text-align:right">$'+sellNum.toFixed(2)+' ex GST</td>'
+      +'<td style="padding:10px 14px;font-size:13px;font-weight:600;color:#001128;border-bottom:1px solid #f0f0f0;text-align:right">$'+Math.round(lineTotal).toLocaleString()+'</td>'
+      +'</tr>';
+  });
+
+  var w=window.open('','_blank');
+  if(!w){alert('Please allow popups to export PDFs.');return}
+
+  var css='*{margin:0;padding:0;box-sizing:border-box}'
+    +'body{font-family:Lato,sans-serif;background:#fff;color:#001128;padding:52px 60px;font-size:14px}'
+    +'.hdr{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:40px;padding-bottom:24px;border-bottom:2px solid #001128}'
+    +'.brand{font-family:Garamond,Baskerville,serif;font-size:14px;letter-spacing:0.1em;text-transform:uppercase}'
+    +'.brand-sub{font-size:11px;color:#888;margin-top:4px}'
+    +'.meta{text-align:right;font-size:12px;color:#888;line-height:1.9}'
+    +'.meta strong{color:#001128;display:block;font-size:22px;font-family:Garamond,Baskerville,serif;margin-bottom:6px}'
+    +'table{width:100%;border-collapse:collapse;margin-bottom:0}'
+    +'thead th{font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:#888;padding:8px 14px;text-align:left;border-bottom:2px solid #001128;font-weight:600}'
+    +'thead th:last-child,thead th:nth-last-child(2){text-align:right}'
+    +'thead th:nth-child(2),thead th:nth-child(3){text-align:center}'
+    +'.total-row{display:flex;justify-content:space-between;align-items:center;padding:16px 14px;background:#001128;border-radius:8px;margin-top:16px;color:#fff}'
+    +'.total-l{font-family:Garamond,Baskerville,serif;font-size:16px}'
+    +'.total-v{font-family:Garamond,Baskerville,serif;font-size:24px;color:#3ACE94}'
+    +'.note{font-size:12px;color:#aaa;line-height:1.7;margin-top:28px;padding-top:20px;border-top:1px solid #f0f0f0}'
+    +'.ftr{display:flex;justify-content:space-between;margin-top:40px;padding-top:20px;border-top:1px solid #f0f0f0;font-size:11px;color:#aaa}'
+    +'.ftr-brand{font-family:Garamond,Baskerville,serif;font-size:14px;color:#001128;display:block;margin-bottom:3px}';
+
+  var body='<div class="hdr">'
+    +'<div><div class="brand">Blanks by Colour Plane</div>'
+    +'<div class="brand-sub">Prepared by '+printerName+(printerCompany?', '+printerCompany:'')+'</div></div>'
+    +'<div class="meta"><strong>Quote</strong>'+today+'<br>'+allLines.length+' item'+(allLines.length!==1?'s':'')+'</div>'
+    +'</div>'
+    +'<table><thead><tr>'
+    +'<th>Garment</th><th>Qty</th><th>Method</th><th>Per unit</th><th>Line total</th>'
+    +'</tr></thead><tbody>'+lineRows+'</tbody></table>'
+    +'<div class="total-row"><span class="total-l">Total (ex GST)</span><span class="total-v">$'+Math.round(grandTotal).toLocaleString()+'</span></div>'
+    +'<div class="note">All garments are Blanks by Colour Plane, shipped from our Australian warehouse. This quote is valid for 30 days. Prices exclude GST.</div>'
+    +'<div class="ftr"><div><span class="ftr-brand">Blanks by Colour Plane</span>colourplaneblanks.world</div>'
+    +'<div style="text-align:right">Prepared '+today+(printerName?'<br>'+printerName+(printerCompany?' &middot; '+printerCompany:''):'')+'</div></div>';
+
+  var doc='<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Quote</title>'
+    +'<link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap" rel="stylesheet">'
+    +'<style>'+css+'</style></head><body>'+body
+    +'<scr'+'ipt>window.onload=function(){window.print();}<'+'/scr'+'ipt>'
+    +'</body></html>';
+  w.document.write(doc);
+  w.document.close();
+}
+
+var quoteLines = [];
+var currentQuoteClient = '';
+
+function addProductToQuote(){
+  if(!calcComplete){
+    alert('Fill in your costs and margin first.');return;
+  }
+  // If first item, ask for client name. If already set, go straight to adding.
+  if(quoteLines.length===0 && !currentQuoteClient){
+    openAddToQuoteModal();
+  } else {
+    doAddProductToQuote(currentQuoteClient||'');
+  }
+}
+
+function openAddToQuoteModal(){
+  // Reuse the existing quote modal but with different wording
+  document.getElementById('modal-form-view').style.display='block';
+  document.getElementById('modal-success-view').style.display='none';
+  document.getElementById('quote-client').value='';
+  document.querySelector('.modal-title').textContent='Add to quote';
+  document.querySelector('.modal-sub').textContent='Who is this quote for?';
+  document.querySelector('.modal-hint').textContent='Save a client or job name — e.g. "Run Club Melbourne" or "Cafe Bastardo uniforms"';
+  document.querySelector('.modal-btn-save').textContent='Add to quote';
+  document.querySelector('.modal-btn-save').onclick = function(){
+    var client=document.getElementById('quote-client').value.trim();
+    if(!client){document.getElementById('quote-client').style.borderColor='#c0392b';return;}
+    document.getElementById('quote-client').style.borderColor='';
+    currentQuoteClient=client;
+    closeQuoteModal();
+    // Restore modal text for save flow
+    document.querySelector('.modal-title').textContent='Save this quote';
+    document.querySelector('.modal-sub').textContent='Who is this quote for?';
+    document.querySelector('.modal-btn-save').textContent='Save quote';
+    document.querySelector('.modal-btn-save').onclick = saveQuote;
+    doAddProductToQuote(client);
+  };
+  document.getElementById('quote-modal').classList.add('open');
+  setTimeout(function(){document.getElementById('quote-client').focus();},100);
+}
+
+function doAddProductToQuote(client){
+  var garmentEl=document.getElementById('calc-garment');
+  var garment=garmentEl?garmentEl.options[garmentEl.selectedIndex].text:'';
+  var qty=calcQty;
+  var sell=(document.getElementById('r-sell')||{}).textContent||'';
+  var profit=(document.getElementById('r-ppu')||{}).textContent||'';
+  var totalProfit=(document.getElementById('r-total-profit')||{}).textContent||'';
+  var total=(document.getElementById('r-total')||{}).textContent||'';
+  var marginRaw=(document.getElementById('r-margin')||{}).textContent||'';
+  var margin=marginRaw&&marginRaw!=='-%'&&marginRaw!=='-'?marginRaw:'';
+  if(!margin){
+    var sellNum=parseFloat((sell||'').replace('$',''))||0;
+    var totalNum=parseFloat((total||'').replace('$',''))||0;
+    if(sellNum>0&&totalNum>0) margin=Math.round((sellNum-totalNum)/sellNum*100)+'%';
+  }
+  var method=(document.getElementById('calc-method')||{}).value||'';
+  var printerName=sessionStorage.getItem('cpg_name')||'';
+  var printerCompany=sessionStorage.getItem('cpg_company')||'';
+
+  quoteLines.push({garment:garment,qty:qty,sell:sell,profit:profit,totalProfit:totalProfit,total:total,margin:margin,method:method});
+
+  // Submit to Google Form
+  fetch('https://docs.google.com/forms/d/e/1FAIpQLSeSfi4NBr9QialanvArOgei3vb-ftWliyX5HaV1_pHIgf6ofA/formResponse',{
+    method:'POST',mode:'no-cors',
+    headers:{'Content-Type':'application/x-www-form-urlencoded'},
+    body:'entry.215009370='+encodeURIComponent(client)
+      +'&entry.1557850711='+encodeURIComponent(garment+' ('+method+')')
+      +'&entry.2127163250='+encodeURIComponent(qty)
+      +'&entry.870123888='+encodeURIComponent(sell)
+      +'&entry.1743229892='+encodeURIComponent(margin)
+      +'&entry.1210305455='+encodeURIComponent(totalProfit)
+      +'&entry.701434556='+encodeURIComponent(printerName+' — '+printerCompany)
+  }).catch(function(){});
+
+  renderQuoteLines();
+  // Reset calculator for next product
+  document.getElementById('calc-garment').selectedIndex=0;
+  document.getElementById('print-cost').value='';
+  document.getElementById('setup-cost').value='';
+  document.getElementById('freight-cost').value='';
+  document.getElementById('margin-pct').value='';
+  document.getElementById('margin-dollar').value='';
+  document.getElementById('sell-price').value='';
+  calcQty=50;
+  document.querySelectorAll('#calc-qty-row .qb').forEach(function(b){b.classList.remove('active')});
+  var qbns=document.querySelectorAll('#calc-qty-row .qb');
+  if(qbns[2]) qbns[2].classList.add('active');
+  onGarmentChange();
+  showInc();
+  setTimeout(function(){
+    var qs=document.getElementById('quote-summary-wrap');
+    if(qs) qs.scrollIntoView({behavior:'smooth',block:'nearest'});
+  },100);
+}
+
+function removeQuoteLine(i){
+  quoteLines.splice(i,1);
+  renderQuoteLines();
+}
+
+function renderQuoteLines(){
+  var wrap=document.getElementById('quote-summary-wrap');
+  var container=document.getElementById('quote-lines');
+  var totalEl=document.getElementById('quote-total-val');
+  if(!container)return;
+  if(quoteLines.length===0){if(wrap)wrap.style.display='none';return;}
+  if(wrap)wrap.style.display='block';
+  container.innerHTML='';
+  var grandTotal=0;
+  quoteLines.forEach(function(q,i){
+    var val=parseFloat((q.totalProfit||'').replace('$','').replace(',',''))||0;
+    grandTotal+=val;
+    var line=document.createElement('div');
+    line.className='qline';
+    line.innerHTML='<span class="qline-name">'+q.garment+'</span>'
+      +'<span class="qline-detail">'+q.qty+' units &middot; '+q.method+'</span>'
+      +'<div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px">'
+      +'<span class="qline-profit">'+q.totalProfit+' profit</span>'
+      +'<span style="font-size:10px;color:rgba(255,255,255,0.3);font-family:var(--fm)">'+q.sell+'/unit'+(q.margin?' &middot; '+q.margin+' margin':'')+'</span>'
+      +'</div>'
+      +'<button class="qline-del" onclick="removeQuoteLine('+i+')" title="Remove">&times;</button>';
+    container.appendChild(line);
+  });
+  if(totalEl) totalEl.textContent='$'+Math.round(grandTotal).toLocaleString();
+}
+
+
+function exportSavedToExcel(){
+  if(!savedQuotes||savedQuotes.length===0){alert('No saved quotes to export.');return;}
+  if(typeof XLSX==='undefined'){alert('Excel library not loaded. Please check your internet connection.');return;}
+  var rows=[['Date','Client','Garment','Quantity','Method','Sell Price','Total Profit','Margin','Printer','Company']];
+  savedQuotes.forEach(function(q){
+    if(q.lines&&q.lines.length){
+      q.lines.forEach(function(l){
+        rows.push([
+          q.date||'',
+          q.client||'',
+          l.garment||'',
+          l.qty||'',
+          l.method||'',
+          l.sell||'',
+          l.totalProfit||'',
+          l.margin||'',
+          sessionStorage.getItem('cpg_name')||'',
+          sessionStorage.getItem('cpg_company')||''
+        ]);
+      });
+    } else {
+      rows.push([
+        q.date||'',
+        q.client||'',
+        q.garment||'',
+        q.qty||'',
+        q.method||'',
+        q.sell||'',
+        q.totalProfit||q.profit||'',
+        q.margin||'',
+        sessionStorage.getItem('cpg_name')||'',
+        sessionStorage.getItem('cpg_company')||''
+      ]);
+    }
+  });
+  var ws=XLSX.utils.aoa_to_sheet(rows);
+  // Column widths
+  ws['!cols']=[{wch:12},{wch:22},{wch:26},{wch:10},{wch:16},{wch:12},{wch:14},{wch:10},{wch:18},{wch:20}];
+  var wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'Quotes');
+  var today=new Date().toLocaleDateString('en-AU',{day:'2-digit',month:'2-digit',year:'numeric'}).replace(/\//g,'-');
+  XLSX.writeFile(wb,'CP-Quotes-'+today+'.xlsx');
+}
+
+function emailSavedQuote(idx){
+  var q=savedQuotes[idx]; if(!q)return;
+  var printerName=sessionStorage.getItem('cpg_name')||'';
+  var printerCompany=sessionStorage.getItem('cpg_company')||'';
+  var today=new Date().toLocaleDateString('en-AU',{day:'numeric',month:'long',year:'numeric'});
+  var lines=q.lines&&q.lines.length?q.lines:[q];
+  var sep='--------------------';
+  var lineItems='';
+  var grandTotal=0;
+  lines.forEach(function(line,i){
+    var sellNum=parseFloat((line.sell||'').replace('$',''))||0;
+    var qty=parseInt(line.qty)||0;
+    var lineTotal=sellNum*qty;
+    grandTotal+=lineTotal;
+    lineItems+='Item '+(i+1)+': '+(line.garment||'')+'\n';
+    lineItems+='  Quantity:       '+qty+' units\n';
+    lineItems+='  Print method:   '+(line.method||'')+'\n';
+    lineItems+='  Price per unit: $'+sellNum.toFixed(2)+' ex GST\n';
+    lineItems+='  Line total:     $'+Math.round(lineTotal).toLocaleString()+' ex GST\n\n';
+  });
+  var emailText='Hi,\n\nPlease find your quote below.\n\n'
+    +sep+'\nQUOTE - '+today+'\n'+sep+'\n\n'
+    +lineItems
+    +sep+'\nTOTAL (ex GST):  $'+Math.round(grandTotal).toLocaleString()+'\n'+sep+'\n\n'
+    +'All garments are Blanks by Colour Plane.\n\n'
+    +'Let me know if you have any questions.\n\n'
+    +'Thanks,\n'+printerName+(printerCompany?'\n'+printerCompany:'');
+  document.getElementById('email-preview-text').textContent=emailText;
+  document.getElementById('email-modal').classList.add('open');
+  var btn=document.getElementById('email-copy-btn');
+  btn.innerHTML='<i class="ti ti-copy" style="font-size:14px"></i> Copy to clipboard';
+  btn.classList.remove('copied');
+}
+
+function pdfSavedQuote(idx){
+  var q=savedQuotes[idx]; if(!q)return;
+  var printerName=sessionStorage.getItem('cpg_name')||'';
+  var printerCompany=sessionStorage.getItem('cpg_company')||'';
+  var today=new Date().toLocaleDateString('en-AU',{day:'numeric',month:'long',year:'numeric'});
+  var lines=q.lines&&q.lines.length?q.lines:[q];
+  var grandTotal=0;
+  var lineRows='';
+  lines.forEach(function(line,i){
+    var sellNum=parseFloat((line.sell||'').replace('$',''))||0;
+    var qty=parseInt(line.qty)||0;
+    var lineTotal=sellNum*qty;
+    grandTotal+=lineTotal;
+    var bg=i%2===0?'#fafafa':'#fff';
+    lineRows+='<tr style="background:'+bg+'">'
+      +'<td style="padding:10px 14px;font-size:13px;color:#001128;border-bottom:1px solid #f0f0f0">'+(line.garment||'')+'</td>'
+      +'<td style="padding:10px 14px;font-size:13px;color:#888;border-bottom:1px solid #f0f0f0;text-align:center">'+qty+'</td>'
+      +'<td style="padding:10px 14px;font-size:13px;color:#888;border-bottom:1px solid #f0f0f0;text-align:center">'+(line.method||'')+'</td>'
+      +'<td style="padding:10px 14px;font-size:13px;color:#001128;border-bottom:1px solid #f0f0f0;text-align:right">$'+sellNum.toFixed(2)+' ex GST</td>'
+      +'<td style="padding:10px 14px;font-size:13px;font-weight:600;color:#001128;border-bottom:1px solid #f0f0f0;text-align:right">$'+Math.round(lineTotal).toLocaleString()+'</td>'
+      +'</tr>';
+  });
+  var w=window.open('','_blank');
+  if(!w){alert('Please allow popups to export PDFs.');return;}
+  var css='*{margin:0;padding:0;box-sizing:border-box}body{font-family:Lato,sans-serif;background:#fff;color:#001128;padding:52px 60px;font-size:14px}'
+    +'.hdr{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:40px;padding-bottom:24px;border-bottom:2px solid #001128}'
+    +'.brand{font-family:Garamond,Baskerville,serif;font-size:14px;letter-spacing:0.1em;text-transform:uppercase}'
+    +'.brand-sub{font-size:11px;color:#888;margin-top:4px}.meta{text-align:right;font-size:12px;color:#888;line-height:1.9}'
+    +'.meta strong{color:#001128;display:block;font-size:22px;font-family:Garamond,Baskerville,serif;margin-bottom:6px}'
+    +'table{width:100%;border-collapse:collapse;margin-bottom:0}'
+    +'thead th{font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:#888;padding:8px 14px;text-align:left;border-bottom:2px solid #001128}'
+    +'thead th:last-child,thead th:nth-last-child(2){text-align:right}thead th:nth-child(2),thead th:nth-child(3){text-align:center}'
+    +'.total-row{display:flex;justify-content:space-between;align-items:center;padding:16px 14px;background:#001128;border-radius:8px;margin-top:16px;color:#fff}'
+    +'.total-l{font-family:Garamond,Baskerville,serif;font-size:16px}.total-v{font-family:Garamond,Baskerville,serif;font-size:24px;color:#3ACE94}'
+    +'.note{font-size:12px;color:#aaa;line-height:1.7;margin-top:28px;padding-top:20px;border-top:1px solid #f0f0f0}'
+    +'.ftr{display:flex;justify-content:space-between;margin-top:40px;padding-top:20px;border-top:1px solid #f0f0f0;font-size:11px;color:#aaa}'
+    +'.ftr-brand{font-family:Garamond,Baskerville,serif;font-size:14px;color:#001128;display:block;margin-bottom:3px}';
+  var body='<div class="hdr"><div><div class="brand">Blanks by Colour Plane</div>'
+    +'<div class="brand-sub">Prepared by '+printerName+(printerCompany?', '+printerCompany:'')+'</div></div>'
+    +'<div class="meta"><strong>'+q.client+'</strong>'+today+'<br>'+lines.length+' item'+(lines.length!==1?'s':'')+'</div></div>'
+    +'<table><thead><tr><th>Garment</th><th>Qty</th><th>Method</th><th>Per unit</th><th>Line total</th></tr></thead>'
+    +'<tbody>'+lineRows+'</tbody></table>'
+    +'<div class="total-row"><span class="total-l">Total (ex GST)</span><span class="total-v">$'+Math.round(grandTotal).toLocaleString()+'</span></div>'
+    +'<div class="note">All garments are Blanks by Colour Plane, shipped from our Australian warehouse. This quote is valid for 30 days. Prices exclude GST.</div>'
+    +'<div class="ftr"><div><span class="ftr-brand">Blanks by Colour Plane</span>colourplaneblanks.world</div>'
+    +'<div style="text-align:right">Prepared '+today+(printerName?'<br>'+printerName+(printerCompany?' &middot; '+printerCompany:''):'')+'</div></div>';
+  var doc='<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Quote - '+q.client+'</title>'
+    +'<link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap" rel="stylesheet">'
+    +'<style>'+css+'</style></head><body>'+body
+    +'<scr'+'ipt>window.onload=function(){window.print();}<'+'/scr'+'ipt></body></html>';
+  w.document.write(doc);
+  w.document.close();
+}
+
+function deleteQuote(i){savedQuotes.splice(i,1);renderSavedQuotes();}
+
+function clearQuote(){
+  if(quoteLines.length===0)return;
+  if(confirm('Clear all line items?')){quoteLines=[];currentQuoteClient='';renderQuoteLines();}
+}
+
+// ── INIT ─────────────────────────────────────────────────────────
+onGarmentChange();
+renderPt();
+renderBandBtns();
+updateBrand();
+</script>
+</body>
+</html>
